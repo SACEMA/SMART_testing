@@ -9,7 +9,7 @@
 
 tstart=0
 tend=100
-timestep_reduction = 20 #looking at half days
+timestep_reduction = 20 #basic timestep is days looking at days
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
 variables = 14 
@@ -60,9 +60,9 @@ m = 0.1     #2,7
 sigma_p = 1/4 * (1/timestep_reduction)   #3 presymptomatic to mild
 sigma_m = 1/8 * (1/timestep_reduction)   #4 mild to critical symptoms = 10% of I_M
 gamma_m = 1/9 * (1/timestep_reduction)   #5 mild to recovery 
-gamma_c = 1/10 * (1/timestep_reduction)   #6 critical to recovery
+gamma_c = 1/10 * (1/timestep_reduction)  #6 critical to recovery
 gamma_a = 1/7 * (1/timestep_reduction)   #8 asymptomatic to recovered   ##psi_a + gamma_a = 1
-mu_c = 1/6    * (1/timestep_reduction)  #20 critical to death
+mu_c = 1/6    * (1/timestep_reduction)   #20 critical to death
 
 #####ascertained parameters
 r = 0
@@ -125,4 +125,4 @@ lines(timesteps, SEIR[, "I_p"], col = 'orange')
 lines(timesteps, SEIR[, "I_m"], col = 'pink' )
 lines(timesteps, SEIR[, "R"], col = 'violet')
 lines(timesteps, SEIR[, "D"])
-
+legend(x = tmax- tmax/4, y = max(SEIR)*0.8)
