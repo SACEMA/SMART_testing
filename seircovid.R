@@ -1,8 +1,6 @@
 ##Discrete time model
 ##covid testing
 
-
-
 #matrix setup
 #rows=time
 #columns=variables(disease compartments)
@@ -15,7 +13,6 @@ timesteps = seq(tstart, tend, 1/timestep_reduction)
 variables = 14 
 SEIR = array(dim = c(length(timesteps),variables))
 colnames(SEIR) = c("S", "E", "I_a", "I_aa","I_p", "I_ap", "I_m", "I_am", "I_c", "I_ac", "R", "R_a", "D", "D_a")
-
 
 #initial population sizes
 S0 = 970
@@ -77,7 +74,6 @@ psi_m = 0#16
 psi_c = 0 #17
 #18
 psi_a = 0#19   ##psi_a + gamma_a = 1
-
 
 for(t_index in seq(2,nrow(SEIR))){
   N = sum(SEIR[t_index-1,])
