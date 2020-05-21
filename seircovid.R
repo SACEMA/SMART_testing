@@ -4,10 +4,12 @@
 #matrix setup
 #rows=discrete time
 #columns=variables (disease compartments)
+rm(list=ls(all=TRUE))
+library(tidyverse)
 
 tstart=0
 tend=100
-timestep_reduction = 2
+timestep_reduction = 1
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
 variables = 14 
@@ -16,7 +18,7 @@ colnames(SEIR) = c("S", "E", "I_a", "A_a","I_p", "A_p", "I_m", "A_m", "I_c", "A_
 
 #initial population sizes
 S0 = 970
-E0 = 20
+E0 = 30
 I_a0 = 0
 I_p0 = 0
 I_m0 =  0
@@ -47,28 +49,31 @@ SEIR[1,] = c(S0, E0, I_a0, A_a0, I_p0, A_p0, I_m0, A_m0, I_c0, A_c0, R0, R_a0, D
 # 10% of I_M goes to critical
 
 
+## testing/ascertainment parameters
+
+samples_collected = rep(10/timestep_reduction, length(timesteps))
+positive_results = c(0, rep(NA, length(timesteps)-1))
+negative_results = c(0, rep(NA, length(timesteps)-1))
+daily_tests = data.frame(samples_collected, positive_results, negative_results)
 
 #lambda =  #1 this is a function of time so appears in loop
-beta = 1 
-alpha = .1  #2,7 exposed to asymptomatic
-m = 0.1     #2,7
+beta = 1.12 
+alpha = .4  #2,7 proportion asymptomatic
+m = 1/3.69     #2,7 1/latency duration
 
-sigma_p = 1/4   #3,11 presymptomatic to mild
-sigma_m = 1/8    #4,12 mild to critical symptoms = 10% of I_M
-gamma_m = 1/9  #5,10 mild to recovery 
-gamma_c = 1/10  #6,13 critical to recovery
+sigma_p = 1/1.75   #3,11 presymptomatic to mild
+sigma_m = 1/7    #4,12 mild to critical
+gamma_m = 1/7  #5,10 mild to recovery 
+gamma_c = 1/11.5  #6,13 critical to recovery
 gamma_a = 1/7  #8,9 asymptomatic to recovered   
 mu_c = 1/6   #20,14 critical to death
 
 #####ascertainment parameters
-r = 0
-psi_p = 0#15
-psi_m = 0#16
-psi_c = 0 #17
-psi_a = 0#19   
+r = 1
 
 for(t_index in seq(2,nrow(SEIR))){
-  N = sum(SEIR[t_index-1,])
+  
+  N = sum(SEIR[t_index-1,1:(ncol(SEIR)-2)])
   
   S = SEIR[t_index - 1, "S"]
   E = SEIR[t_index - 1, "E"]
@@ -84,9 +89,23 @@ for(t_index in seq(2,nrow(SEIR))){
   R_a = SEIR[t_index - 1, "R_a"]
   D = SEIR[t_index - 1, "D"]
   D_a = SEIR[t_index - 1, "D_a"]
+  tests_conducted = daily_tests[t_index - 1, "samples_collected"]
   
   #lambda is a fucntion of time
   lambda = beta*(((I_a + I_p + I_m + I_c)+r*(A_a + A_p + A_m + A_c))/N)
+  
+  #ascertainment rates are functions of time
+  eligible_pop = as.numeric(N - (A_a + A_p + A_m + A_c + R_a))
+  psi_p = 1/eligible_pop * tests_conducted #15
+  psi_m = 1/eligible_pop * tests_conducted #16
+  psi_c = 1/eligible_pop * tests_conducted #17
+  psi_a = 1/eligible_pop * tests_conducted
+  psi_neg = 1/eligible_pop * tests_conducted
+  print(c(psi_p, psi_m, psi_c, psi_a, psi_neg))
+
+  negative_results = psi_neg * (S + E + R)
+  positive_results = (psi_p * I_p) + (psi_m * I_m) + (psi_c * I_c) + (psi_a * I_a)
+  
   
   change_S = - lambda*S
   change_E = lambda*S - m*E
@@ -103,11 +122,14 @@ for(t_index in seq(2,nrow(SEIR))){
   change_D = mu_c*I_c
   change_D_a = mu_c*A_c
   
-  rateofchange<-c(change_S, change_E, change_I_a, change_A_a, change_I_p, change_A_p, change_I_m,
+  rateofchange <- c(change_S, change_E, change_I_a, change_A_a, change_I_p, change_A_p, change_I_m,
                   change_A_m, change_I_c,change_A_c, change_R, change_R_a, change_D,change_D_a)
   
-  SEIR[t_index,]= SEIR[t_index-1,] + rateofchange*1/timestep_reduction
+  SEIR[t_index,] = SEIR[t_index-1,] + rateofchange*1/timestep_reduction
  
+  daily_tests[t_index, "positive_results"] = positive_results
+  daily_tests[t_index, "negative_results"] = negative_results
+  
 }
 
 
@@ -122,3 +144,21 @@ lines(timesteps, SEIR[, "D"], col = 'black')
 legend(105, 900, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
        col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
 
+lines(timesteps, cumsum(daily_tests$positive_results), lwd=3, col = 'grey')
+
+
+## this next section is very very dirty code and we're not proud
+## but the basic model does work as expected
+
+hidden_positives = SEIR %>%
+  data.frame() %>%
+  select(I_a, I_p, I_m, I_c)
+hidden_prevalence = rowSums(hidden_positives)
+eligible_pop_per_time = SEIR %>%
+  data.frame() %>%
+  select(-c(R_a, A_a, A_p, A_m, A_c, D_a, D))
+elibibility_prevalence = rowSums(eligible_pop_per_time)
+
+plot(timesteps, daily_tests$positive_results/daily_tests$samples_collected, type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
+lines(timesteps, hidden_prevalence/elibibility_prevalence, col = 'green')
+legend(x=60, y = 0.40, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
