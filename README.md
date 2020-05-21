@@ -1,3 +1,6 @@
+Latex for equations can be edited on overleaf at the following link: https://www.overleaf.com/9746813331cmxhjfjmcwhk.
+
+
 # 2020-04-29
 
 Start with a simple model of Covid spread, combined with a simple

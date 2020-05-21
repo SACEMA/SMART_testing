@@ -1,0 +1,39 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\title{Surveillance simulation equations}
+\date{May 2020}
+
+\begin{document}
+
+\maketitle
+
+
+\begin{eqnarray}
+\Delta S_{t} &=&  - S_{t} \lambda \\
+\Delta  E_{t} &=&  S_t \lambda - m E_{t} \\
+\Delta  {I_A}_{t}&=&  \alpha m E_{t} -  (\psi_A + \gamma_A) {I_A}_{t}\\
+\Delta  {A_A}_{t}  &=&  \psi_A {I_A}_{t} - {\gamma_A} {A_{A}}_{t}\\
+\Delta  {I_P}_{t}  &=&  (1 - \alpha) m E_{t} - (\sigma_P + \psi_P) {I_P}_{t} \\
+\Delta  {A_P}_{t} &=&  \psi_P {I_P}_{t} - {\sigma_P} {A_{P}}_{t}\\
+\Delta  {I_M}_{t} &=& \sigma_P {I_P}_{t} - (\sigma_M + \psi_M + \gamma_M) {I_M}_{t} \\
+\Delta  {A_M}_{t} &=&  {\sigma_P} {A_{P}}_{t} + \psi_M {I_M}_{t} - ({\sigma_{M}} + {\gamma_M}){A_{M}}_{t}\\
+\Delta  {I_C}_{t}  &=&  \sigma_M {I_M}_{t} - (\gamma_C + \psi_C + \mu_C){I_C}_{t}\\ 
+\Delta  {A_C}_{t}  &=&  \psi_C {I_C}_{t} + {\sigma_M} {A_{M}}_{t} - ({\gamma_C} + {\mu_C}) {A_{C}}_{t}\\
+\Delta  {R}_{t}  &=&  \gamma_A {I_A}_{t} + \gamma_M {I_M}_{t} + \gamma_C {I_C}_{t}\\
+\Delta  {R_A}_{t}  &=&  {\gamma_A} {A_{A}}_{t} + {\gamma_M} {A_{M}}_{t} + {\gamma_C} {A_{C}}_{t}\\
+\Delta  D_{t}  &=&  \mu_C {I_C}_{t} \\
+\Delta  {D_A}_{t}  &=&  {\mu_C} {A_{C}}_{t}
+\end{eqnarray}
+
+
+\begin{gather}
+\lambda  =  \beta \frac{(I_A + I_P + I_M + I_C) + r (A_{A} + A_{P} + A_{M} + A_{C})}{N} \\
+\sigma  =  \text{Progression rates between infectious compartments}\\
+\gamma  =  \text{Recovery rates}\\
+\psi  =  \text{Ascertainment rates}\\
+\mu  =  \text{Death rates}\\
+\end{gather}
+\end{document}
+
+
