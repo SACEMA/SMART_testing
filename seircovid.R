@@ -126,7 +126,7 @@ lines(timesteps, SEIR[, "I_m"], col = 'pink' )
 lines(timesteps, SEIR[, "R"], col = 'violet')
 lines(timesteps, SEIR[, "D"])
 
-legend(x = tmax- tmax/4, y = max(SEIR)*0.8)
+# legend(x = tmax- tmax/4, y = max(SEIR)*0.8)
 
-legend(105, 900, legend=c("S", "E", "I_a", "I_p", "I_m" , "R"),
+legend(85, 900, legend=c("S", "E", "I_a", "I_p", "I_m" , "R"),
        col=c("blue", "red", "green", "orange", "pink", "violet"), lty=1, cex=0.8)
