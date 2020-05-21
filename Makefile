@@ -1,5 +1,5 @@
 
-## This is …
+## This is the SMART_testing repo
 
 current: target
 -include target.mk
