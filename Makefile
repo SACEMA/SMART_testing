@@ -15,6 +15,8 @@ Sources += $(wildcard *.R)
 
 seircovid.Rout: seircovid.R
 
+hazard.Rout: hazard.R
+
 ######################################################################
 
 ### Makestuff

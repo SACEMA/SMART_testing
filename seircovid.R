@@ -106,7 +106,6 @@ for(t_index in seq(2,nrow(SEIR))){
   negative_results = psi_neg * (S + E + R)
   positive_results = (psi_p * I_p) + (psi_m * I_m) + (psi_c * I_c) + (psi_a * I_a)
   
-  
   change_S = - lambda*S
   change_E = lambda*S - m*E
   change_I_a = (alpha*m)*E - (psi_a + gamma_a)*I_a
