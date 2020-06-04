@@ -123,8 +123,9 @@ for(t_index in seq(2,nrow(SEIR))){
   #lambda is a fucntion of time
   lambda = beta*(((I_a + I_p + I_m + I_c)+r*(A_a + A_p + A_m + A_c))/N)
   
+
   # update due to disease process
-  
+
   change_S = - lambda*S
   change_E = lambda*S - m*E
   change_I_a = (alpha*m)*E - (gamma_a)*I_a
