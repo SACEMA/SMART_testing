@@ -1,7 +1,7 @@
 ##Discrete time model
 ##covid testing
 
-rmvhyper(1, n = c(1,2,3), k = 2)
+# rmvhyper(1, n = c(1,2,3), k = 2)
 
 # rules
 # can't have k > sum(n)
@@ -62,8 +62,8 @@ N0 = sum(SEIR[1,])
 ## testing/ascertainment parameters
 
 
-tests_conducted = rep(10, length(timesteps))
-max_daily_test_supply = rep(50000, length(timesteps)) # these supply parameters shouldn't be constant
+tests_conducted = rep(100, length(timesteps))
+max_daily_test_supply = rep(500, length(timesteps)) # these supply parameters shouldn't be constant
 
 # they should be based on real (or realistic) data on test availability
 compartments_to_test = c("S", "E", "I_a","I_p",  "I_m", "I_c", "R" )
@@ -119,13 +119,10 @@ for(t_index in seq(2,nrow(SEIR))){
   D = SEIR[t_index - 1, "D"]
   D_a = SEIR[t_index - 1, "D_a"]
   
-  
   #lambda is a fucntion of time
   lambda = beta*(((I_a + I_p + I_m + I_c)+r*(A_a + A_p + A_m + A_c))/N)
   
-
-  # update due to disease process
-
+  # moving between compartments due to disease process
   change_S = - lambda*S
   change_E = lambda*S - m*E
   change_I_a = (alpha*m)*E - (gamma_a)*I_a
@@ -146,13 +143,12 @@ for(t_index in seq(2,nrow(SEIR))){
   
   SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_disease_processes*1/timestep_reduction
   
-  # beta distribution
-  ## note: it is a lot more convenient to have at least some lag..
-  # we want to 
+  # Moving between compartments due to testing:
+  
   test_result_lag = 0
   test_collection_date = max(t_index - test_result_lag, 1)
   
-  sampling_weights = c(.1, .1, 1, 1, 1, 1, .1)
+  sampling_weights = c(0.1, 0.1, 1, 1, 1, 1, 0.1)
   
   groupsizes= floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
                     * sampling_weights)
@@ -188,36 +184,35 @@ for(t_index in seq(2,nrow(SEIR))){
   change_test_D = 0
   change_test_D_a = 0
   
-  # update due to ascertainment
   rates_change_testing= c(change_test_S, change_test_E, change_test_I_a, change_test_A_a,
                           change_test_I_p, change_test_A_p, change_test_I_m, change_test_A_m,
                           change_test_I_c, change_test_A_c, change_test_R, change_test_R_a,
                           change_test_D, change_test_D_a)
   SEIR[t_index, ] = SEIR[t_index, ] + rates_change_testing
-  
 }
 
-# 
-# plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
-# lines(timesteps, SEIR[, "E"], col = 'red')
-# lines(timesteps, SEIR[, "I_a"], col = 'green')
-# lines(timesteps, SEIR[, "I_p"], col = 'orange')
-# lines(timesteps, SEIR[, "I_m"], col = 'pink' )
-# lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
-# lines(timesteps, SEIR[, "R"], col = 'violet')
-# lines(timesteps, SEIR[, "D"], col = 'black')
-# lines(timesteps, SEIR[, "A_a"], col = 'black')
-# legend(105, 8000, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
-#        col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
+
+plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
+lines(timesteps, SEIR[, "E"], col = 'red')
+lines(timesteps, SEIR[, "I_a"], col = 'green')
+lines(timesteps, SEIR[, "I_p"], col = 'orange')
+lines(timesteps, SEIR[, "I_m"], col = 'pink' )
+lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
+lines(timesteps, SEIR[, "R"], col = 'violet')
+lines(timesteps, SEIR[, "D"], col = 'black')
+lines(timesteps, SEIR[, "A_a"], col = 'black')
+legend(105, 8000, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
+       col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
 
 
 
-plot(timesteps, SEIR[, "A_a"], type = 'l', col = 'blue', ylim = c(min(SEIR), 100), xlim=c(0,130))
+plot(timesteps, SEIR[, "A_a"], type = 'l', col = 'blue', ylim = c(min(SEIR), 2000), xlim=c(0,130))
 lines(timesteps, SEIR[, "A_p"], col = 'red')
 lines(timesteps, SEIR[, "A_m"], col = 'green')
 lines(timesteps, SEIR[, "A_c"], col = 'orange')
-legend(105, 100, legend=c("A_a", "A_p", "A_m", "A_c"),
+legend(105, 1800, legend=c("A_a", "A_p", "A_m", "A_c"),
        col=c("blue", "red", "green", "orange"), lty=1, cex=0.8)
+
 # 
 # true_positives = SEIR %>%
 #   data.frame() %>%
@@ -246,4 +241,4 @@ elibibility_prevalence = rowSums(eligible_pop_per_time)
 
 plot(timesteps[1:(length(timesteps)-1)], pos/tests_conducted[1:(length(tests_conducted) - 5)], type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
 lines(timesteps, hidden_prevalence/elibibility_prevalence, col = 'green')
-legend(x=60, y = 0.90, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
+legend(x=60, y = 2, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
