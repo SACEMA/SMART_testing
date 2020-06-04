@@ -1,11 +1,20 @@
 ##Discrete time model
 ##covid testing
 
-#matrix setup
-#rows=discrete time
-#columns=variables (disease compartments)
+rmvhyper(1, n = c(1,2,3), k = 2)
+
+# rules
+# can't have k > sum(n)
+# all groupsizes must be non-negative
+
+# random note
+# want to later encode not all infecteds available for testing
+
+
 rm(list=ls(all=TRUE))
 library(tidyverse)
+library(extraDistr)
+
 
 tstart=0
 tend=100
@@ -17,8 +26,8 @@ SEIR = array(dim = c(length(timesteps),variables))
 colnames(SEIR) = c("S", "E", "I_a", "A_a","I_p", "A_p", "I_m", "A_m", "I_c", "A_c", "R", "R_a", "D", "D_a")
 
 #initial population sizes
-S0 = 970
-E0 = 30
+S0 = 9700
+E0 = 300
 I_a0 = 0
 I_p0 = 0
 I_m0 =  0
@@ -35,6 +44,7 @@ D_a0 = 0
 
 SEIR[1,] = c(S0, E0, I_a0, A_a0, I_p0, A_p0, I_m0, A_m0, I_c0, A_c0, R0, R_a0, D0, D_a0 )
 
+N0 = sum(SEIR[1,])
 
 #####parameter values#####
 # sigma = progression rates between infectious compartments 
@@ -51,14 +61,34 @@ SEIR[1,] = c(S0, E0, I_a0, A_a0, I_p0, A_p0, I_m0, A_m0, I_c0, A_c0, R0, R_a0, D
 
 ## testing/ascertainment parameters
 
-samples_collected = rep(10/timestep_reduction, length(timesteps))
-positive_results = c(0, rep(NA, length(timesteps)-1))
-negative_results = c(0, rep(NA, length(timesteps)-1))
-daily_tests = data.frame(samples_collected, positive_results, negative_results)
 
-#lambda =  #1 this is a function of time so appears in loop
-beta = 1.12 
-alpha = .4  #2,7 proportion asymptomatic
+tests_conducted = rep(10, length(timesteps))
+max_daily_test_supply = rep(50000, length(timesteps)) # these supply parameters shouldn't be constant
+
+# they should be based on real (or realistic) data on test availability
+compartments_to_test = c("S", "E", "I_a","I_p",  "I_m", "I_c", "R" )
+tested = array(dim = c(length(timesteps),length(compartments_to_test)))
+colnames(tested) = compartments_to_test
+pos<-c()
+neg<-c()
+
+testing_demand_feedback_strength = 0
+testing_demand_lag = 4 #days
+
+# Notes on "demand-driven" testing roll-out
+# - don't want total numbers of tests wanted to get too out of hand?
+# - demand parameter can also be thought of as (1/total_pop) * max_realistic_test_supply
+# - could also do something like A_total/I_total * some_parameter. I.e. govt has
+# some idea how many infections there really are, as well as how many infections are detected,
+# and will scale up testing to try and close that gap as much as they can
+# - when planning scenarios (e.g. low resources, only test critical cases;
+# high resources, widespread random testing etc) we must take care to choose the 
+# max_daily_supply and test criteria parameters in a sensible and consistent way
+# (e.g. if we want widescale random testing the max_daily_supply would need to
+# be sufficiently large)
+
+beta = 0.8 
+alpha = .25  #2,7 proportion asymptomatic
 m = 1/3.69     #2,7 1/latency duration
 
 sigma_p = 1/1.75   #3,11 presymptomatic to mild
@@ -68,8 +98,7 @@ gamma_c = 1/11.5  #6,13 critical to recovery
 gamma_a = 1/7  #8,9 asymptomatic to recovered   
 mu_c = 1/6   #20,14 critical to death
 
-#####ascertainment parameters
-r = 1
+r = 1 #reduction in "infectiousness" due to ascertainment (i.e. some form of quarantine or self-isolation)
 
 for(t_index in seq(2,nrow(SEIR))){
   
@@ -89,76 +118,131 @@ for(t_index in seq(2,nrow(SEIR))){
   R_a = SEIR[t_index - 1, "R_a"]
   D = SEIR[t_index - 1, "D"]
   D_a = SEIR[t_index - 1, "D_a"]
-  tests_conducted = daily_tests[t_index - 1, "samples_collected"]
+  
   
   #lambda is a fucntion of time
   lambda = beta*(((I_a + I_p + I_m + I_c)+r*(A_a + A_p + A_m + A_c))/N)
   
-  #ascertainment rates are functions of time
-  eligible_pop = as.numeric(N - (A_a + A_p + A_m + A_c + R_a))
-  psi_p = 1/eligible_pop * tests_conducted #15
-  psi_m = 1/eligible_pop * tests_conducted #16
-  psi_c = 1/eligible_pop * tests_conducted #17
-  psi_a = 1/eligible_pop * tests_conducted
-  psi_neg = 1/eligible_pop * tests_conducted
-  print(c(psi_p, psi_m, psi_c, psi_a, psi_neg))
-
-  negative_results = psi_neg * (S + E + R)
-  positive_results = (psi_p * I_p) + (psi_m * I_m) + (psi_c * I_c) + (psi_a * I_a)
-  
+  # update due to disease process
   
   change_S = - lambda*S
   change_E = lambda*S - m*E
-  change_I_a = (alpha*m)*E - (psi_a + gamma_a)*I_a
-  change_A_a = psi_a*I_a - gamma_a*A_a
-  change_I_p = ((1-alpha)*m)*E - (sigma_p + psi_p)*I_p
-  change_A_p = psi_p*I_p - sigma_p*A_p
-  change_I_m = sigma_p*I_p - (sigma_m + psi_m + gamma_m)*I_m
-  change_A_m = sigma_p*A_p + psi_m*I_m - (sigma_m + gamma_m)*A_m
-  change_I_c = sigma_m*I_m - (gamma_c + psi_c + mu_c)*I_c
-  change_A_c = psi_c*I_c + sigma_m*A_m - (gamma_c + mu_c)*A_c
+  change_I_a = (alpha*m)*E - (gamma_a)*I_a
+  change_A_a = - gamma_a*A_a
+  change_I_p = ((1-alpha)*m)*E - (sigma_p)*I_p
+  change_A_p = - sigma_p*A_p
+  change_I_m = sigma_p*I_p - (sigma_m + gamma_m)*I_m
+  change_A_m = sigma_p*A_p - (sigma_m + gamma_m)*A_m
+  change_I_c = sigma_m*I_m - (gamma_c  + mu_c)*I_c
+  change_A_c = sigma_m*A_m - (gamma_c + mu_c)*A_c
   change_R = gamma_a*I_a + gamma_m*I_m + gamma_c*I_c
   change_R_a = gamma_a * A_a + gamma_m*A_m + gamma_c*A_c
   change_D = mu_c*I_c
   change_D_a = mu_c*A_c
   
-  rateofchange <- c(change_S, change_E, change_I_a, change_A_a, change_I_p, change_A_p, change_I_m,
+  rateofchange_disease_processes <- c(change_S, change_E, change_I_a, change_A_a, change_I_p, change_A_p, change_I_m,
                   change_A_m, change_I_c,change_A_c, change_R, change_R_a, change_D,change_D_a)
   
-  SEIR[t_index,] = SEIR[t_index-1,] + rateofchange*1/timestep_reduction
- 
-  daily_tests[t_index, "positive_results"] = positive_results
-  daily_tests[t_index, "negative_results"] = negative_results
+  SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_disease_processes*1/timestep_reduction
+  
+  # beta distribution
+  ## note: it is a lot more convenient to have at least some lag..
+  # we want to 
+  test_result_lag = 0
+  test_collection_date = max(t_index - test_result_lag, 1)
+  
+  sampling_weights = c(.1, .1, 1, 1, 1, 1, .1)
+  
+  groupsizes= floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
+                    * sampling_weights)
+  
+  if(tests_conducted[test_collection_date] > sum(groupsizes)){
+    print(sprintf("WARNING: %s tests available, but only %s eligible individuals. Reducing tests_conducted to number of eligible individuals.", tests_conducted[test_collection_date], sum(groupsizes)))
+    tests_conducted[test_collection_date] = sum(groupsizes)
+  }
+  
+  tested_pergroup <- rmvhyper(1, n=groupsizes, k=tests_conducted[test_collection_date])
+  
+  tested[t_index,]<- tested_pergroup
+  neg<-append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R"]))
+  pos<-append(pos, sum(tested[t_index,"I_a"],tested[t_index,"I_p"],tested[t_index,"I_m"],tested[t_index,"I_c"] ))
+  
+  tests_wanted_in_two_weeks = pos[length(pos)] * testing_demand_feedback_strength
+  tests_conducted[t_index + testing_demand_lag] =
+    tests_conducted[t_index + testing_demand_lag] +
+    min(tests_wanted_in_two_weeks, max_daily_test_supply[t_index + testing_demand_lag])
+  
+  change_test_S = 0
+  change_test_E = 0
+  change_test_I_a = - tested[t_index,"I_a"] 
+  change_test_A_a = tested[t_index,"I_a"]
+  change_test_I_p = - tested[t_index,"I_p"]
+  change_test_A_p = tested[t_index,"I_p"]
+  change_test_I_m = - tested[t_index,"I_m"]
+  change_test_A_m = tested[t_index,"I_m"]
+  change_test_I_c = - tested[t_index,"I_c"]
+  change_test_A_c = tested[t_index,"I_c"]
+  change_test_R = 0
+  change_test_R_a = 0
+  change_test_D = 0
+  change_test_D_a = 0
+  
+  # update due to ascertainment
+  rates_change_testing= c(change_test_S, change_test_E, change_test_I_a, change_test_A_a,
+                          change_test_I_p, change_test_A_p, change_test_I_m, change_test_A_m,
+                          change_test_I_c, change_test_A_c, change_test_R, change_test_R_a,
+                          change_test_D, change_test_D_a)
+  SEIR[t_index, ] = SEIR[t_index, ] + rates_change_testing
   
 }
 
+# 
+# plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
+# lines(timesteps, SEIR[, "E"], col = 'red')
+# lines(timesteps, SEIR[, "I_a"], col = 'green')
+# lines(timesteps, SEIR[, "I_p"], col = 'orange')
+# lines(timesteps, SEIR[, "I_m"], col = 'pink' )
+# lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
+# lines(timesteps, SEIR[, "R"], col = 'violet')
+# lines(timesteps, SEIR[, "D"], col = 'black')
+# lines(timesteps, SEIR[, "A_a"], col = 'black')
+# legend(105, 8000, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
+#        col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
 
-plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
-lines(timesteps, SEIR[, "E"], col = 'red')
-lines(timesteps, SEIR[, "I_a"], col = 'green')
-lines(timesteps, SEIR[, "I_p"], col = 'orange')
-lines(timesteps, SEIR[, "I_m"], col = 'pink' )
-lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
-lines(timesteps, SEIR[, "R"], col = 'violet')
-lines(timesteps, SEIR[, "D"], col = 'black')
-legend(105, 900, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
-       col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
 
-lines(timesteps, cumsum(daily_tests$positive_results), lwd=3, col = 'grey')
+
+plot(timesteps, SEIR[, "A_a"], type = 'l', col = 'blue', ylim = c(min(SEIR), 100), xlim=c(0,130))
+lines(timesteps, SEIR[, "A_p"], col = 'red')
+lines(timesteps, SEIR[, "A_m"], col = 'green')
+lines(timesteps, SEIR[, "A_c"], col = 'orange')
+legend(105, 100, legend=c("A_a", "A_p", "A_m", "A_c"),
+       col=c("blue", "red", "green", "orange"), lty=1, cex=0.8)
+# 
+# true_positives = SEIR %>%
+#   data.frame() %>%
+#   select(I_p, I_a, I_m, I_c, A_p, A_a, A_m, A_c)
+# true_positives_summary = rowSums(true_positives)
+# 
+# 
+# plot(neg)
+# plot(pos, type = "l", ylim = c(0,max(true_positives_summary)))
+# lines(true_positives_summary)
+
+#lines(timesteps, cumsum(daily_tests$positive_results), lwd=3, col = 'grey')
 
 
 ## this next section is very very dirty code and we're not proud
 ## but the basic model does work as expected
 
 hidden_positives = SEIR %>%
-  data.frame() %>%
-  select(I_a, I_p, I_m, I_c)
+ data.frame() %>%
+ select(I_a, I_p, I_m, I_c)
 hidden_prevalence = rowSums(hidden_positives)
 eligible_pop_per_time = SEIR %>%
-  data.frame() %>%
-  select(-c(R_a, A_a, A_p, A_m, A_c, D_a, D))
+ data.frame() %>%
+ select(-c(R_a, A_a, A_p, A_m, A_c, D_a, D))
 elibibility_prevalence = rowSums(eligible_pop_per_time)
 
-plot(timesteps, daily_tests$positive_results/daily_tests$samples_collected, type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
+plot(timesteps[1:(length(timesteps)-1)], pos/tests_conducted[1:(length(tests_conducted) - 5)], type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
 lines(timesteps, hidden_prevalence/elibibility_prevalence, col = 'green')
-legend(x=60, y = 0.40, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
+legend(x=60, y = 0.90, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
