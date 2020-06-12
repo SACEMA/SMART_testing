@@ -10,11 +10,9 @@
 # random note
 # want to later encode not all infecteds available for testing
 
-
 rm(list=ls(all=TRUE))
 library(tidyverse)
 library(extraDistr)
-
 
 tstart=0
 tend=100
@@ -58,9 +56,15 @@ N0 = sum(SEIR[1,])
 # 15% of E goes to I_A
 # 10% of I_M goes to critical
 
+# tests_in_class = size_of_class / eligible_pop_size * total_tests
+# carrying capacity for getting tested
+# (weight we are assigning * n_critical) / total_eligible
+
+# P(S) = S/N
+# P(I) = I*w_I/(S+R+I*w_I)
+# check that elibigible pop is larger than n_tests (and adjust if necessary)
 
 ## testing/ascertainment parameters
-
 
 tests_conducted = rep(100, length(timesteps))
 max_daily_test_supply = rep(500, length(timesteps)) # these supply parameters shouldn't be constant
@@ -150,8 +154,14 @@ for(t_index in seq(2,nrow(SEIR))){
   
   sampling_weights = c(0.1, 0.1, 1, 1, 1, 1, 0.1)
   
-  groupsizes= floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
-                    * sampling_weights)
+  groupsizes = floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
+                    * sampling_weights) #weighted group sizes; equivalent to group members eligible for testing
+  
+  # number of tests
+  # tests_per_weighted_groupsize * sum(groupsizes) = n_tests 
+  # tests_per_weighted_groupsize = n_tests / sum(groupsizes) #really tests allocated
+  # min(groupsizes['k'], tests_per_weighted_groupsize * groupsizes['k'] ) = n_tests_k, where k is a compartment
+  # function(number of tests, population_vector, relative_hazard_vector)
   
   if(tests_conducted[test_collection_date] > sum(groupsizes)){
     print(sprintf("WARNING: %s tests available, but only %s eligible individuals. Reducing tests_conducted to number of eligible individuals.", tests_conducted[test_collection_date], sum(groupsizes)))
