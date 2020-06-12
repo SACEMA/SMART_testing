@@ -24,11 +24,13 @@ assignTests <- function(numTests, state, relHaz, mult=1.1){
 	)
 	baseHaz <- uni$root
 	place <- placeTests(state, baseHaz*relHaz)
+	# print(numTests/sum(place))
 	return(numTests*place/sum(place))
 }
 
 assignTests(
 	numTests <- 180
-	, state <- c(100, 100)
-	, relHaz <- c(1, 3)
+	, state <- c("a" = 100,"b" = 100)
+	, relHaz <- c("a" = 1,"b" = 3)
 )
+

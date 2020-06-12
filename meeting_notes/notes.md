@@ -27,7 +27,6 @@ SMART-testing June 04 2020
 
 		* Question: should we make the lag stochastic (which distribution to use)? or spread the effect of demand?
 
-
 ## Points discussed
 
 #### Research Question
@@ -44,7 +43,7 @@ We should explore the model we currently have (focussing on differential testing
 #### Questions and comments for moving forward:
 * deterministic version should be deterministic, stochastic version should be stochastic.
 * Should we make the testing deterministic for now, and then later move to a fully stochastic model, or should we make the switch to a stochastic version right now? Answer: Start with a fully deterministic model: Junior team to spend approximately 1 hour trying to figure out how a deterministic analog to the hypergeometric distribution, otherwise we will ping Jonathan.
-* Why are we getting feedback in proportions positive via the "demand-drives" testing mechanism we have implemented?
+* Why are we getting feedback in proportions positive via the "demand-driven" testing mechanism we have implemented?
 * Request that we move towards doing things in the tidyverse.
 
 #### Current situation in SA:

@@ -11,6 +11,7 @@
 # want to later encode not all infecteds available for testing
 
 rm(list=ls(all=TRUE))
+source("hazard.R")
 library(tidyverse)
 library(extraDistr)
 
@@ -66,8 +67,8 @@ N0 = sum(SEIR[1,])
 
 ## testing/ascertainment parameters
 
-tests_conducted = rep(100, length(timesteps))
-max_daily_test_supply = rep(500, length(timesteps)) # these supply parameters shouldn't be constant
+tests_conducted = rep(50, length(timesteps))
+max_daily_test_supply = rep(150, length(timesteps)) # these supply parameters shouldn't be constant
 
 # they should be based on real (or realistic) data on test availability
 compartments_to_test = c("S", "E", "I_a","I_p",  "I_m", "I_c", "R" )
@@ -151,11 +152,11 @@ for(t_index in seq(2,nrow(SEIR))){
   
   test_result_lag = 0
   test_collection_date = max(t_index - test_result_lag, 1)
+  # 
+  # sampling_weights = c(0.1, 0.1, 1, 1, 1, 1, 0.1)
   
-  sampling_weights = c(0.1, 0.1, 1, 1, 1, 1, 0.1)
-  
-  groupsizes = floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
-                    * sampling_weights) #weighted group sizes; equivalent to group members eligible for testing
+  # groupsizes = floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
+                    # * sampling_weights) #weighted group sizes; equivalent to group members eligible for testing
   
   # number of tests
   # tests_per_weighted_groupsize * sum(groupsizes) = n_tests 
@@ -163,22 +164,35 @@ for(t_index in seq(2,nrow(SEIR))){
   # min(groupsizes['k'], tests_per_weighted_groupsize * groupsizes['k'] ) = n_tests_k, where k is a compartment
   # function(number of tests, population_vector, relative_hazard_vector)
   
-  if(tests_conducted[test_collection_date] > sum(groupsizes)){
-    print(sprintf("WARNING: %s tests available, but only %s eligible individuals. Reducing tests_conducted to number of eligible individuals.", tests_conducted[test_collection_date], sum(groupsizes)))
-    tests_conducted[test_collection_date] = sum(groupsizes)
+  # if(tests_conducted[test_collection_date] > sum(groupsizes)){
+  #   print(sprintf("WARNING: %s tests available, but only %s eligible individuals. Reducing tests_conducted to number of eligible individuals.", tests_conducted[test_collection_date], sum(groupsizes)))
+  #   tests_conducted[test_collection_date] = sum(groupsizes)
+  # }
+  # 
+  # tested_pergroup <- rmvhyper(1, n=groupsizes, k=tests_conducted[test_collection_date])
+  
+  
+  relHaz = c("S" = 1, "E" = 1, "I_a" = 1, "I_p" = 1, "I_m" = 1,"I_c" = 1, "R" = 1) # still don't know how to interpret these numbers... for example, how do we account for the number of people we think have covid-like symptoms, but no covid?
+  elibible_pop = sum(SEIR[t_index, names(relHaz[relHaz > 0])]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
+  
+  if(elibible_pop < tests_conducted[t_index]){
+    print(sprintf("%s tests planned, but only %s individuals with nonzero hazards of being tested", tests_conducted[t_index], elibible_pop))
+    tests_conducted[t_index] = elibible_pop
   }
   
-  tested_pergroup <- rmvhyper(1, n=groupsizes, k=tests_conducted[test_collection_date])
+  tested_per_group = assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz)
   
-  tested[t_index,]<- tested_pergroup
+  tested[t_index,]<- tested_per_group
   neg<-append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R"]))
   pos<-append(pos, sum(tested[t_index,"I_a"],tested[t_index,"I_p"],tested[t_index,"I_m"],tested[t_index,"I_c"] ))
+  
   
   tests_wanted_in_two_weeks = pos[length(pos)] * testing_demand_feedback_strength
   tests_conducted[t_index + testing_demand_lag] =
     tests_conducted[t_index + testing_demand_lag] +
     min(tests_wanted_in_two_weeks, max_daily_test_supply[t_index + testing_demand_lag])
   
+ 
   change_test_S = 0
   change_test_E = 0
   change_test_I_a = - tested[t_index,"I_a"] 
@@ -252,3 +266,8 @@ elibibility_prevalence = rowSums(eligible_pop_per_time)
 plot(timesteps[1:(length(timesteps)-1)], pos/tests_conducted[1:(length(tests_conducted) - 5)], type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
 lines(timesteps, hidden_prevalence/elibibility_prevalence, col = 'green')
 legend(x=60, y = 2, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
+
+# questions/tasks to resolve before tuesday
+# - plot results nicely (see meeting notes)
+# - why are there regular fluctuations in the demand driven testing
+# - why one day lag?
