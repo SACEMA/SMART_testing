@@ -67,18 +67,24 @@ N0 = sum(SEIR[1,])
 
 ## testing/ascertainment parameters
 
-tests_conducted = rep(50, length(timesteps))
-max_daily_test_supply = rep(150, length(timesteps)) # these supply parameters shouldn't be constant
+tests_conducted = rep(250, length(timesteps))
+max_daily_test_supply = rep(1000, length(timesteps)) # these supply parameters shouldn't be constant
 
 # they should be based on real (or realistic) data on test availability
 compartments_to_test = c("S", "E", "I_a","I_p",  "I_m", "I_c", "R" )
 tested = array(dim = c(length(timesteps),length(compartments_to_test)))
 colnames(tested) = compartments_to_test
-pos<-c()
-neg<-c()
+pos<-c(0)
+neg<-c(tests_conducted[1])
+tested[1,] = 0
+incident_cases = c(0)
+prevalent_cases = c(0)
+observed_prevalent_cases = c(0)
+cumulative_observed_cases = c(0)
+cumulative_observed_deaths = c(0)
 
 testing_demand_feedback_strength = 0
-testing_demand_lag = 4 #days
+testing_demand_lag = 14 #days
 
 # Notes on "demand-driven" testing roll-out
 # - don't want total numbers of tests wanted to get too out of hand?
@@ -149,29 +155,7 @@ for(t_index in seq(2,nrow(SEIR))){
   SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_disease_processes*1/timestep_reduction
   
   # Moving between compartments due to testing:
-  
-  test_result_lag = 0
-  test_collection_date = max(t_index - test_result_lag, 1)
-  # 
-  # sampling_weights = c(0.1, 0.1, 1, 1, 1, 1, 0.1)
-  
-  # groupsizes = floor(SEIR[test_collection_date, c("S", "E", "I_a", "I_p", "I_m", "I_c", "R")] 
-                    # * sampling_weights) #weighted group sizes; equivalent to group members eligible for testing
-  
-  # number of tests
-  # tests_per_weighted_groupsize * sum(groupsizes) = n_tests 
-  # tests_per_weighted_groupsize = n_tests / sum(groupsizes) #really tests allocated
-  # min(groupsizes['k'], tests_per_weighted_groupsize * groupsizes['k'] ) = n_tests_k, where k is a compartment
-  # function(number of tests, population_vector, relative_hazard_vector)
-  
-  # if(tests_conducted[test_collection_date] > sum(groupsizes)){
-  #   print(sprintf("WARNING: %s tests available, but only %s eligible individuals. Reducing tests_conducted to number of eligible individuals.", tests_conducted[test_collection_date], sum(groupsizes)))
-  #   tests_conducted[test_collection_date] = sum(groupsizes)
-  # }
-  # 
-  # tested_pergroup <- rmvhyper(1, n=groupsizes, k=tests_conducted[test_collection_date])
-  
-  
+
   relHaz = c("S" = 1, "E" = 1, "I_a" = 1, "I_p" = 1, "I_m" = 1,"I_c" = 1, "R" = 1) # still don't know how to interpret these numbers... for example, how do we account for the number of people we think have covid-like symptoms, but no covid?
   elibible_pop = sum(SEIR[t_index, names(relHaz[relHaz > 0])]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
   
@@ -182,17 +166,14 @@ for(t_index in seq(2,nrow(SEIR))){
   
   tested_per_group = assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz)
   
-  tested[t_index,]<- tested_per_group
+  tested[t_index, ] <- tested_per_group
   neg<-append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R"]))
   pos<-append(pos, sum(tested[t_index,"I_a"],tested[t_index,"I_p"],tested[t_index,"I_m"],tested[t_index,"I_c"] ))
+  incident_cases <- append(incident_cases, S*lambda)
+  prevalent_cases <- append(prevalent_cases, sum(I_a, A_a, I_p, A_p, I_m, A_m, I_c, A_c))
+  observed_prevalent_cases <- append(observed_prevalent_cases, sum(A_a, A_p, A_m, A_c))
   
   
-  tests_wanted_in_two_weeks = pos[length(pos)] * testing_demand_feedback_strength
-  tests_conducted[t_index + testing_demand_lag] =
-    tests_conducted[t_index + testing_demand_lag] +
-    min(tests_wanted_in_two_weeks, max_daily_test_supply[t_index + testing_demand_lag])
-  
- 
   change_test_S = 0
   change_test_E = 0
   change_test_I_a = - tested[t_index,"I_a"] 
@@ -208,13 +189,89 @@ for(t_index in seq(2,nrow(SEIR))){
   change_test_D = 0
   change_test_D_a = 0
   
+  
   rates_change_testing= c(change_test_S, change_test_E, change_test_I_a, change_test_A_a,
                           change_test_I_p, change_test_A_p, change_test_I_m, change_test_A_m,
                           change_test_I_c, change_test_A_c, change_test_R, change_test_R_a,
                           change_test_D, change_test_D_a)
   SEIR[t_index, ] = SEIR[t_index, ] + rates_change_testing
+  
+  #testing demand feedback
+  tests_wanted_in_two_weeks = pos[length(pos)] * testing_demand_feedback_strength
+  tests_conducted[t_index + testing_demand_lag] =
+    tests_conducted[t_index + testing_demand_lag] +
+    min(tests_wanted_in_two_weeks, max_daily_test_supply[t_index + testing_demand_lag])
+  
 }
 
+tests_conducted = tests_conducted[1:length(timesteps)] #dirty fix for demand driven testing making this vector too long
+
+n_alive = SEIR %>%
+  data.frame() %>%
+  select(-D, -D_a) %>%
+  rowSums()
+
+rowSums(n_alive)
+
+dd <- SEIR %>%
+  data.frame() %>%
+  mutate(positive_tests = pos, day = 1:nrow(SEIR)) %>%
+  mutate(incident_cases = incident_cases) %>%
+  mutate(tests_conducted = tests_conducted) %>%
+  mutate(prevalent_cases = prevalent_cases) %>%
+  mutate(observed_prevalent_cases = observed_prevalent_cases) %>%
+  mutate(n_alive = n_alive) %>%
+  mutate(prevalence_per_thousand = 1000 * prevalent_cases/n_alive) %>%
+  mutate(daily_deaths = c(0, diff(D)+diff(D_a))) %>%
+  mutate(daily_deaths_unobserved = c(0, diff(D))) %>%
+  mutate(daily_deaths_observed = c(0, diff(D_a))) %>%
+  # group_by(day) %>%
+  mutate(cumulative_confirmed_cases = cumsum(positive_tests))
+  
+cumulative_plot <- dd %>%
+  ggplot(aes(x = day, y = cumulative_confirmed_cases, color = "Cumulative confirmed cases")) +
+  geom_line()+
+  # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
+  geom_line(aes(x = day, y = D_a, color = "Cumulative observed deaths"))+
+  labs(x = "Time (days)", y = "Cumulative cases and deaths")
+cumulative_plot
+
+outbreak_plot <- dd %>%
+  ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence"))+
+  geom_line() +
+  labs(x = "Time (days)", y = "Cases per thousand population")
+outbreak_plot
+
+mortality_plot <- dd %>%
+  ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+  geom_line() +
+  labs(x = "Time (days)", y = "People")
+mortality_plot
+
+inc_plot <- dd %>% ggplot(aes(x = day, y = incident_cases, color = "Incident cases per day")) +
+  geom_line() +
+  geom_line(aes(x = day, y = pos, color = "Newly confirmed cases per day")) +
+  geom_line(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+  labs(x = "Time (days)", y = "People")
+inc_plot
+
+prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed prevalent cases"))+
+  geom_line() +
+  geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases"))
+prev_plot
+
+prop_ascertained_plot <- dd %>% 
+  ggplot(aes(x = day, y = observed_prevalent_cases/prevalent_cases, color =
+               "Proportion of true positives \n which are ascertained")) +
+  geom_line() +
+  labs(x = "Time (days)", y = "Proportion")
+prop_ascertained_plot
+
+
+
+# pos_vs_inc <- dd %>% ggplot(aes(x = pos, y = incident_cases, color = "incident_cases")) +
+#   geom_line()
+# pos_vs_inc
 
 plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
 lines(timesteps, SEIR[, "E"], col = 'red')
@@ -254,18 +311,18 @@ legend(105, 1800, legend=c("A_a", "A_p", "A_m", "A_c"),
 ## this next section is very very dirty code and we're not proud
 ## but the basic model does work as expected
 
-hidden_positives = SEIR %>%
- data.frame() %>%
- select(I_a, I_p, I_m, I_c)
-hidden_prevalence = rowSums(hidden_positives)
-eligible_pop_per_time = SEIR %>%
- data.frame() %>%
- select(-c(R_a, A_a, A_p, A_m, A_c, D_a, D))
-elibibility_prevalence = rowSums(eligible_pop_per_time)
+# hidden_positives = SEIR %>%
+#  data.frame() %>%
+#  select(I_a, I_p, I_m, I_c)
+# hidden_prevalent_cases = rowSums(hidden_positives)
+# eligible_pop_per_time = SEIR %>%
+#  data.frame() %>%
+#  select(-c(R_a, A_a, A_p, A_m, A_c, D_a, D))
+# elibibility_prevalent_cases = rowSums(eligible_pop_per_time)
 
-plot(timesteps[1:(length(timesteps)-1)], pos/tests_conducted[1:(length(tests_conducted) - 5)], type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
-lines(timesteps, hidden_prevalence/elibibility_prevalence, col = 'green')
-legend(x=60, y = 2, legend = c("proportion\n positive \n","prevalence \n among \n eligibles"), lty = 1, col = c("blue", "green"))
+# plot(timesteps[1:(length(timesteps))], pos/tests_conducted[1:(length(tests_conducted))], type = 'l', col = 'blue', ylab = "Proportion", xlab = "time (days)")
+# lines(timesteps, hidden_prevalent_cases/elibibility_prevalent_cases, col = 'green')
+# legend(x=60, y = 2, legend = c("proportion\n positive \n","prevalent_cases \n among \n eligibles"), lty = 1, col = c("blue", "green"))
 
 # questions/tasks to resolve before tuesday
 # - plot results nicely (see meeting notes)
