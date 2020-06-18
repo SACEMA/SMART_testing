@@ -52,3 +52,34 @@ We should explore the model we currently have (focussing on differential testing
 * now that there's a big backlog of tests they are talking about discarding backlog (samples degraded?)
 * pending change in testing protocol. under new protocol only healthcare workers at high risk and people admitted to hospital will be tested.
 * How active is/was community screening? How many of those samples were processed?
+
+
+
+## Meeting 2020-06-18
+
+### Agenda:
+Present progress:
+* deterministic distribution of tests (distributes all tests)
+* cyclic behavior seems to be improved
+
+### Discussion:
+Questions for South Africa
+* how many COVID deaths go undetected?
+* someone dies of covid without being tested - how are they classified?
+* what percentage of critical cases are dying?
+* tracking of throwing away of backlogs (how is backlog being processed, how are they choosing which backlogs to throw away)
+* what is happening with backlogs?
+* what is positivity rate in SA?
+
+Next steps:
+* look through parameters again and make sure the fatality rates are reasonable
+* explore some simple scenarios. e.g. initially bias towards testing covid-positive people (travellers), then shift towards more-random testing, then shift back to only-hospitalised people (including non-covid hospitalisations)
+* start thinking about lags in testing and how they might be incorporated
+* characterise the current method of demand-driven testing and think about how it could be improved. (suggestion: testing = product of demand and supply / sum of demand and supply. There may be a second order refinement of this.). Describe the "slider for how much testing is determined by demand vs supply".
+* plot prevalence of non-ascertained people among elibible population (as a basic test)
+* what effect is the removal of ascertained people from the testing pool having on the proportion positive over time (we expect it to decrease)
+After next steps:
+* include mechanism for post-mortem classification of deaths?
+* full demographic stochasticity
+* consider making this a shiny app; at least create better pipeline for outputs.
+
