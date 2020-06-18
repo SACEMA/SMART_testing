@@ -25,8 +25,8 @@ SEIR = array(dim = c(length(timesteps),variables))
 colnames(SEIR) = c("S", "E", "I_a", "A_a","I_p", "A_p", "I_m", "A_m", "I_c", "A_c", "R", "R_a", "D", "D_a")
 
 #initial population sizes
-S0 = 9700
-E0 = 300
+S0 = 9997
+E0 = 3
 I_a0 = 0
 I_p0 = 0
 I_m0 =  0
@@ -78,6 +78,7 @@ pos<-c(0)
 neg<-c(tests_conducted[1])
 tested[1,] = 0
 incident_cases = c(0)
+incident_inf_cases = c(0)
 prevalent_cases = c(0)
 observed_prevalent_cases = c(0)
 cumulative_observed_cases = c(0)
@@ -170,6 +171,7 @@ for(t_index in seq(2,nrow(SEIR))){
   neg<-append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R"]))
   pos<-append(pos, sum(tested[t_index,"I_a"],tested[t_index,"I_p"],tested[t_index,"I_m"],tested[t_index,"I_c"] ))
   incident_cases <- append(incident_cases, S*lambda)
+  incident_inf_cases <- append(incident_inf_cases,  m*E )
   prevalent_cases <- append(prevalent_cases, sum(I_a, A_a, I_p, A_p, I_m, A_m, I_c, A_c))
   observed_prevalent_cases <- append(observed_prevalent_cases, sum(A_a, A_p, A_m, A_c))
   
@@ -188,7 +190,6 @@ for(t_index in seq(2,nrow(SEIR))){
   change_test_R_a = 0
   change_test_D = 0
   change_test_D_a = 0
-  
   
   rates_change_testing= c(change_test_S, change_test_E, change_test_I_a, change_test_A_a,
                           change_test_I_p, change_test_A_p, change_test_I_m, change_test_A_m,
@@ -211,12 +212,11 @@ n_alive = SEIR %>%
   select(-D, -D_a) %>%
   rowSums()
 
-rowSums(n_alive)
-
 dd <- SEIR %>%
   data.frame() %>%
   mutate(positive_tests = pos, day = 1:nrow(SEIR)) %>%
   mutate(incident_cases = incident_cases) %>%
+  mutate(incident_inf_cases = incident_inf_cases) %>%
   mutate(tests_conducted = tests_conducted) %>%
   mutate(prevalent_cases = prevalent_cases) %>%
   mutate(observed_prevalent_cases = observed_prevalent_cases) %>%
@@ -248,16 +248,17 @@ mortality_plot <- dd %>%
   labs(x = "Time (days)", y = "People")
 mortality_plot
 
-inc_plot <- dd %>% ggplot(aes(x = day, y = incident_cases, color = "Incident cases per day")) +
+inc_plot <- dd %>% ggplot(aes(x = day, y = incident_inf_cases, color = "Incident infectious \n cases per day")) +
   geom_line() +
   geom_line(aes(x = day, y = pos, color = "Newly confirmed cases per day")) +
   geom_line(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
   labs(x = "Time (days)", y = "People")
 inc_plot
 
-prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed prevalent cases"))+
+prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed (Ascertained) \n prevalent cases"))+
   geom_line() +
-  geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases"))
+  geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
+  labs(x = "Time (days)", y = "People")
 prev_plot
 
 prop_ascertained_plot <- dd %>% 
@@ -272,28 +273,28 @@ prop_ascertained_plot
 # pos_vs_inc <- dd %>% ggplot(aes(x = pos, y = incident_cases, color = "incident_cases")) +
 #   geom_line()
 # pos_vs_inc
-
-plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
-lines(timesteps, SEIR[, "E"], col = 'red')
-lines(timesteps, SEIR[, "I_a"], col = 'green')
-lines(timesteps, SEIR[, "I_p"], col = 'orange')
-lines(timesteps, SEIR[, "I_m"], col = 'pink' )
-lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
-lines(timesteps, SEIR[, "R"], col = 'violet')
-lines(timesteps, SEIR[, "D"], col = 'black')
-lines(timesteps, SEIR[, "A_a"], col = 'black')
-legend(105, 8000, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
-       col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
-
-
-
-plot(timesteps, SEIR[, "A_a"], type = 'l', col = 'blue', ylim = c(min(SEIR), 2000), xlim=c(0,130))
-lines(timesteps, SEIR[, "A_p"], col = 'red')
-lines(timesteps, SEIR[, "A_m"], col = 'green')
-lines(timesteps, SEIR[, "A_c"], col = 'orange')
-legend(105, 1800, legend=c("A_a", "A_p", "A_m", "A_c"),
-       col=c("blue", "red", "green", "orange"), lty=1, cex=0.8)
-
+# 
+# plot(timesteps, SEIR[, "S"], type = 'l', col = 'blue', ylim = c(min(SEIR), max(SEIR)), xlim=c(0,130))
+# lines(timesteps, SEIR[, "E"], col = 'red')
+# lines(timesteps, SEIR[, "I_a"], col = 'green')
+# lines(timesteps, SEIR[, "I_p"], col = 'orange')
+# lines(timesteps, SEIR[, "I_m"], col = 'pink' )
+# lines(timesteps, SEIR[, "I_c"], col = 'turquoise' )
+# lines(timesteps, SEIR[, "R"], col = 'violet')
+# lines(timesteps, SEIR[, "D"], col = 'black')
+# lines(timesteps, SEIR[, "A_a"], col = 'black')
+# legend(105, 8000, legend=c("S", "E", "I_a", "I_p", "I_m" , "I_c", "R", "D"),
+#        col=c("blue", "red", "green", "orange", "pink", "turquoise","violet", "black"), lty=1, cex=0.8)
+# 
+# 
+# 
+# plot(timesteps, SEIR[, "A_a"], type = 'l', col = 'blue', ylim = c(min(SEIR), 2000), xlim=c(0,130))
+# lines(timesteps, SEIR[, "A_p"], col = 'red')
+# lines(timesteps, SEIR[, "A_m"], col = 'green')
+# lines(timesteps, SEIR[, "A_c"], col = 'orange')
+# legend(105, 1800, legend=c("A_a", "A_p", "A_m", "A_c"),
+#        col=c("blue", "red", "green", "orange"), lty=1, cex=0.8)
+# 
 # 
 # true_positives = SEIR %>%
 #   data.frame() %>%
