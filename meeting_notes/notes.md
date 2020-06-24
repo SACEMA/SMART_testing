@@ -56,6 +56,7 @@ We should explore the model we currently have (focussing on differential testing
 
 
 ## Meeting 2020-06-18
+And subsequent discussion with Juliet
 
 ### Agenda:
 Present progress:
@@ -71,15 +72,41 @@ Questions for South Africa
 * what is happening with backlogs?
 * what is positivity rate in SA?
 
-Next steps:
+### Next steps:
 * look through parameters again and make sure the fatality rates are reasonable
-* explore some simple scenarios. e.g. initially bias towards testing covid-positive people (travellers), then shift towards more-random testing, then shift back to only-hospitalised people (including non-covid hospitalisations)
-* start thinking about lags in testing and how they might be incorporated
+* explore some simple scenarios. e.g. initially bias towards testing covid-positive people (travellers), then shift towards more-random testing, then shift back to only-hospitalised people (including non-covid hospitalisations) **
+* start thinking about lags in testing and how they might be incorporated.
 * characterise the current method of demand-driven testing and think about how it could be improved. (suggestion: testing = product of demand and supply / sum of demand and supply. There may be a second order refinement of this.). Describe the "slider for how much testing is determined by demand vs supply".
-* plot prevalence of non-ascertained people among elibible population (as a basic test)
-* what effect is the removal of ascertained people from the testing pool having on the proportion positive over time (we expect it to decrease)
-After next steps:
+* plot prevalence of non-ascertained people among elibible population (as a basic test) **
+* what effect is the removal of ascertained people from the testing pool having on the proportion positive over time (we expect it to decrease) ** proportion positive vs prevalence?
+
+### After next steps:
 * include mechanism for post-mortem classification of deaths?
 * full demographic stochasticity
 * consider making this a shiny app; at least create better pipeline for outputs.
 
+Random idea:
+what about (deterministically) smushing delay from collection to result
+
+Agenda: 2020_06_24
+
+1. Fatality rates corrected (outbreak plot and/or cumulative plot)
+2. Demand feedback (Tests conducted plot)
+3. Discussion about scenarios:
+- what we did; how do we actually choose values for these?
+4. How will we implement lag?
+- separate test processing and test collection?
+- implementing a lag:
+	- do we want to separate test collection and processing ? In order to create a backlog.
+	- we want the lag to be smushed out in time ? at least when there's a big backlog.
+	- it feels as if the "Ascertained" compartments are getting in the way of including a backlog...
+- do we really want ascertained compartments? it seem like hospitalisation is a somewhat separate process, and in many places quarantine will depend on symptoms rather than testing (so quarantining people based on testing will make the process more realistic for pre-symptomatic and asymptomatic people [?] but we can probably get away with clunky things instead of all these compartments). clunky things = fixed reduction of infectiousness of critical cases (and/or mild), or a reduction in overall transmission related to the extent of ascertainment.
+
+not done: pipeline, sensible separation of distinct parts of code, saving output plots
+
+
+Other things:
+- Basic question: having critical going directly to death/recovery is an issue? how to we balance amount of people who die vs recover with the amount of time it takes them to die/recover?
+- what do we call "ascertained" to be consistent
+- prevalence among eligible pop vs proportion positive
+- how should we organise code?
