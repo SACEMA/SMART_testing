@@ -88,7 +88,7 @@ Questions for South Africa
 Random idea:
 what about (deterministically) smushing delay from collection to result
 
-Agenda: 2020_06_24
+## Agenda: 2020_06_24
 
 1. Fatality rates corrected (outbreak plot and/or cumulative plot)
 2. Demand feedback (Tests conducted plot)
@@ -104,20 +104,22 @@ Agenda: 2020_06_24
 
 not done: pipeline, sensible separation of distinct parts of code, saving output plots
 
-td
+### To-do
 0. clean and pipe and engineer - Jeremy to begin
 1. clearly write down the definitions of each scenario
 2. fixing scenarios (fixing weights). same weights over time.
 3. ask "if trying to infer incidence from tests, how could you do that?
-3. just do a simple comparison like we did in the first one  
-4. how does little r differ between positives and reality; can we control for that.
-5. what factors offset the peak of one from the peak of the other
+4. just do a simple comparison like we did in the first one  
+5. how does little r differ between positives and reality; can we control for that.
+6. what factors offset the peak of one from the peak of the other
 -next level. to what extent can or can't you learn more or faster from reports than just from hospitalisations
 - is there evidence that using negative test results can be an improvement over using just positives, positives + hospital, just hospital. if so, what are the improvements we can use.
-6. generate "true" and "visible" outputs.
-7. add compartments of people waiting for test results - Abi
+7. generate "true" and "visible" outputs.
+8. add compartments of people waiting for test results - Abi
 *** imagine a pipeline which takes observed data and tries to infer true data
-- Elisha to look at literature - Elisha
+9. Elisha to look at literature - Elisha
+
+### Misc
 - current 1/5 test positive in SA.
 - lag complicated; solution: compartments of people waiting for test results.
 
@@ -130,7 +132,6 @@ comment from Juliet:
 - data curation team?
 - how are covid hospitalisations classified? are they reporting suspected covid hospitalisations?
 
-
 Other things:
 - Basic question: having critical going directly to death/recovery is an issue? how to we balance amount of people who die vs recover with the amount of time it takes them to die/recover?
 
@@ -139,12 +140,12 @@ Other things:
 - how should we organise code?
 
 Junior team meeting:
-each of us think of a pitch direction, then make pitch to group.
-what
+- each of us think of a pitch direction, then make pitch to group.
+
 
 # Meeting 2020-07-01
 ### Agenda
-* This is a short update meeting
+* This is a short update meeting. lots still to do [2-7 above].
 * Jeremy's very minor updates
 * Elisha's literature update
 * Abi's update on waiting compartments and discussion to accompany
