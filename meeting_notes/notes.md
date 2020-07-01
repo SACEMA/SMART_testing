@@ -104,9 +104,63 @@ Agenda: 2020_06_24
 
 not done: pipeline, sensible separation of distinct parts of code, saving output plots
 
+td
+0. clean and pipe and engineer - Jeremy to begin
+1. clearly write down the definitions of each scenario
+2. fixing scenarios (fixing weights). same weights over time.
+3. ask "if trying to infer incidence from tests, how could you do that?
+3. just do a simple comparison like we did in the first one  
+4. how does little r differ between positives and reality; can we control for that.
+5. what factors offset the peak of one from the peak of the other
+-next level. to what extent can or can't you learn more or faster from reports than just from hospitalisations
+- is there evidence that using negative test results can be an improvement over using just positives, positives + hospital, just hospital. if so, what are the improvements we can use.
+6. generate "true" and "visible" outputs.
+7. add compartments of people waiting for test results - Abi
+*** imagine a pipeline which takes observed data and tries to infer true data
+- Elisha to look at literature - Elisha
+- current 1/5 test positive in SA.
+- lag complicated; solution: compartments of people waiting for test results.
+
+- another issue related to backlog is degradation of samples over time. (2-4 days after collection most samples will test negative)
+- highly sensitive; specificity?
+- weird lines. why are they squiggly?
+comment from Juliet:
+- interesting to see that positivity goes down as soon as we hit threshold.
+- in a situation such as SA, is there an indicator of when testing is reliable? or positivity?
+- data curation team?
+- how are covid hospitalisations classified? are they reporting suspected covid hospitalisations?
+
 
 Other things:
 - Basic question: having critical going directly to death/recovery is an issue? how to we balance amount of people who die vs recover with the amount of time it takes them to die/recover?
+
 - what do we call "ascertained" to be consistent
 - prevalence among eligible pop vs proportion positive
 - how should we organise code?
+
+Junior team meeting:
+each of us think of a pitch direction, then make pitch to group.
+what
+
+# Meeting 2020-07-01
+### Agenda
+* This is a short update meeting
+* Jeremy's very minor updates
+* Elisha's literature update
+* Abi's update on waiting compartments and discussion to accompany
+
+
+General consideration
+* people being tested positive - reported in "tests done" statistics?
+* this work could eventually be presented to NICD to request better data.
+
+### Elisha's literature update
+* we should all read this paper (Junior team can read and write summary?)
+* one place with space is that they focussed on CFR and IFR (testing bias in those measures). Could be good for us to be using our model to explore bias in Rt or r or peak timing, final size, etc. (Only paper that looks at these measures are those by Pitzer et al.)
+* Didn't look at any data (purely theoretical model)
+* use simpler version of test assignment
+* use fewer disease compartment distinctions, but include age and ??
+* normal surveillance with PCR (random only) and sero survey
+* testing more of diseased/symptomatic classes will bias IFR.
+* even if sampling randomly can still have biased estimate of case fatality because there is a lag - cases are moving
+* people who got infected today, take some time before you know their outcome.
