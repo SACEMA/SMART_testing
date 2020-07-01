@@ -146,7 +146,7 @@ Junior team meeting:
 # Meeting 2020-07-01
 ### Agenda
 * This is a short update meeting. lots still to do [2-7 above].
-* Jeremy's very minor updates
+* Jeremy's very minor updates. Jeremy to meet with Mike.
 * Elisha's literature update
 * Abi's update on waiting compartments and discussion to accompany
 
@@ -156,7 +156,8 @@ General consideration
 * this work could eventually be presented to NICD to request better data.
 
 ### Elisha's literature update
-* we should all read this paper (Junior team can read and write summary?)
+* looked for mechanistic models which captured testing in a similar way to us
+* we should all read this paper (Junior team can read and write summary?). https://www.medrxiv.org/content/10.1101/2020.05.02.20088120v1.full.pdf
 * one place with space is that they focussed on CFR and IFR (testing bias in those measures). Could be good for us to be using our model to explore bias in Rt or r or peak timing, final size, etc. (Only paper that looks at these measures are those by Pitzer et al.)
 * Didn't look at any data (purely theoretical model)
 * use simpler version of test assignment
@@ -165,3 +166,20 @@ General consideration
 * testing more of diseased/symptomatic classes will bias IFR.
 * even if sampling randomly can still have biased estimate of case fatality because there is a lag - cases are moving
 * people who got infected today, take some time before you know their outcome.
+* major finding was that focussing on testing bias towards testing symptomatics will bias IFR. random testing still results in bias due to right-censoring.
+
+### Points raised
+* It never hurts to push things (git).
+* Jonathan thinks he saw a paper (probably multiple) which tried to account for testing in estimating little r. Team effort to bring papers to each others' attention.
+* add an annotated bibliography for the repo. (Jeremy make this)
+* should omega be part of E -> I?
+* when moving from e to i or i to r, just take them out of testing and back to untested. W_c to R, or W_E to I_p i.e. when the neg/pos status is changing. (If you change status you have to go back into untested group in new status and return test at that time.)
+* sample accumulator and test accumulator.
+* if we really want to have a backlog implemented, we need testing rates not be constant.
+* two different recovered boxes. (biological recovery vs test negative recovery). what to do for testing compartment?
+* Elisha's pitch - have waiting boxes only for S, E and R. then move people right to ascertained, and track tests separately (which we're doing anyways). point is that distributed delay is more difficult to implement than testing compartments.
+
+* don't understand Abi's coloring system but really like it. they just help.
+* W_s go back right to S.
+* should have a mechanism for reducing mixing rates of everyone in W compartments.
+* meetings at 5.30 going forward.
