@@ -1,4 +1,3 @@
-
 ### Helper function:
 ### Where _would_ the tests go, assuming you know the sizes and hazards?
 placeTests <- function(state, haz){
@@ -14,7 +13,7 @@ checkTests <-  function(base, numTests, state, haz){
 ### to get the right number number of tests
 assignTests <- function(numTests, state, relHaz, mult=1.1){
 	hpop <- sum(state[relHaz>0])
-	stopifnot(numTests<hpop)
+	stopifnot(numTests<=hpop)
 	popHaz <- min(relHaz[relHaz>0])
 	prop <- numTests/hpop
 	upr <- -mult*log(1-prop)/popHaz
@@ -31,6 +30,6 @@ assignTests <- function(numTests, state, relHaz, mult=1.1){
 assignTests(
 	numTests <- 180
 	, state <- c("a" = 100,"b" = 100)
-	, relHaz <- c("a" = 1,"b" = 3)
+	, relHaz <- c("a" = 1,"b" = 1)
 )
 

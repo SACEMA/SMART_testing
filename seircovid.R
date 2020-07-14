@@ -37,14 +37,10 @@ SEIR[1,] = c(S0, E0, I_a0, A_a0, I_p0, A_p0, I_m0, A_m0, I_c0, A_c0, R0, R_a0, D
 N0 = sum(SEIR[1,])
 
 tests_conducted = rep(100, length(timesteps))
-
 max_daily_test_supply = rep(1000, length(timesteps))
 
-# max_daily_test_supply = 
-
-
-testing_demand_feedback_strength = 5
-testing_demand_lag = 4 #days
+testing_demand_feedback_strength = 15
+testing_demand_lag = 2 #days
 
 # proportion of people being ascertained (demand) * some factor
 
@@ -86,15 +82,15 @@ relHaz = matrix(nrow = length(timesteps), ncol = 7)
 colnames(relHaz) = c("S", "E", "I_a", "I_p", "I_m","I_c", "R")
 relHaz = relHaz %>% data.frame()
 
-for(i in 1:101){
-  relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 1, 1, 1, 1, 1)}
- 
-# for(i in 1:14){
-#   relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 10, 10, 10, 10, 10)}
-# for(i in 15:35){
+# for(i in 1:101){
 #   relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 1, 1, 1, 1, 1)}
-# for(i in 36:length(timesteps)){
-#   relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 1, 1, 2, 50, 2)}
+ 
+for(i in 1:14){
+  relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 10, 10, 10, 10, 1)}
+for(i in 15:25){
+  relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 1, 1, 1, 1, 1)}
+for(i in 26:length(timesteps)){
+  relHaz[i,c("S", "E", "I_a", "I_p", "I_m","I_c", "R")] = c(1 , 1, 1, 1, 2, 50, 1)}
 
 
 for(t_index in seq(2,nrow(SEIR))){
@@ -215,13 +211,9 @@ dd <- SEIR %>%
   mutate(cumulative_incidence = cumsum(incident_cases)) %>%
   mutate(max_daily_test_supply = max_daily_test_supply)
 
-testing_plot <- dd %>%
-  ggplot(aes(x = day, y = tests_conducted, color = "Tests conducted")) +
-  geom_line() +
-  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
-  geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
-  labs(title = "Impact of positive tests on test demand", x = 'Time (days)', y = "Tests")
-testing_plot
+cbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
+
 
 test_efficacy_plot <- dd %>%
   ggplot(aes(x = day, y = prevalent_cases_non_ascertained, color = 'Prevalent cases, non-ascertained')) +
@@ -232,13 +224,15 @@ test_efficacy_plot
 test_efficacy_plot_relative <- dd %>%
   ggplot(aes(x = day, y = prevalent_cases_non_ascertained/eligible_pop, color = 'Prevalence among \n people eligible for testing')) +
   geom_line() + 
-  geom_line(aes(x = day, y = prop_positive, color = 'Proportion positive'))
+  geom_line(aes(x = day, y = prop_positive, color = 'Proportion positive')) +
+  scale_colour_manual(values=cbPalette)
 test_efficacy_plot_relative
 
 prop_pos_plot <- dd %>%
   ggplot(aes(x = day, y = prop_positive, color = "Proportion of tests \n which come back positive")) +
   geom_line() +
-  geom_line(aes(x= day, y = prevalence_per_thousand/1000, color = "Prevalence per \n million")) 
+  geom_line(aes(x= day, y = prevalence_per_thousand/1000, color = "Prevalence per \n million")) +
+  scale_colour_manual(values=cbPalette) 
 prop_pos_plot
 
 cumulative_plot <- dd %>%
@@ -246,14 +240,55 @@ cumulative_plot <- dd %>%
   geom_line()+
   # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
   geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
+  scale_colour_manual(values=cbPalette) +
   labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths")
 cumulative_plot
 
 prevalence_plot <- dd %>%
   ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence"))+
   geom_line() +
+  scale_colour_manual(values=cbPalette) +
   labs(x = "Time (days)", y = "Cases per thousand population")
 prevalence_plot
+
+
+mortality_plot <- dd %>%
+  ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+  geom_line() +
+  scale_colour_manual(values=cbPalette) +
+  labs(x = "Time (days)", y = "People")
+mortality_plot
+
+inc_plot <- dd %>% ggplot(aes(x = day, y = incident_inf_cases, color = "Incident infectious \n cases per day")) +
+  geom_line() +
+  geom_line(aes(x = day, y = pos, color = "Newly confirmed cases per day")) +
+  geom_line(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+  geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed \n daily deaths"))+
+  # geom_line(aes(x = day, y = prevalence_per_thousand, color = "Prevalence per thousand")) +
+  scale_colour_manual(values=cbPalette) +
+  labs(x = "Time (days)", y = "People")
+inc_plot
+
+prop_ascertained_plot <- dd %>%
+  ggplot(aes(x = day, y = observed_prevalent_cases/prevalent_cases, color =
+               "Proportion of true positives \n which are ascertained")) +
+  geom_line() +
+  scale_colour_manual(values=cbPalette) +
+  labs(x = "Time (days)", y = "Proportion")
+prop_ascertained_plot
+
+
+prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed (Ascertained) \n prevalent cases"))+
+  geom_line() +
+  geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
+  scale_colour_manual(values=cbPalette) +
+  geom_line(aes(x = day, y = tests_conducted, color = "Tests conducted")) +
+  geom_line() +
+  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
+  geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
+  scale_y_continuous(trans = "log1p")+
+  labs(x = "Time (days)", y = "People")
+prev_plot
 
 outbreak_plot <- dd %>%
   ggplot(aes(x = day, y = E, color = "Exposed")) +
@@ -265,35 +300,17 @@ outbreak_plot <- dd %>%
   geom_line(aes(x = day, y = I_c + A_c, color = "Critical")) +
   # geom_line(aes(x = day, y = R + R_a, color = "R")) +
   geom_line(aes(x = day, y = D_a + D, color = "Dead")) +
+  scale_colour_manual(values=cbPalette) +
   labs(y = "Prevalent Cases", x = "Time (days)")
 outbreak_plot
 
-mortality_plot <- dd %>%
-  ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+testing_plot <- dd %>%
+  ggplot(aes(x = day, y = tests_conducted, color = "Tests conducted")) +
   geom_line() +
-  labs(x = "Time (days)", y = "People")
-mortality_plot
-
-inc_plot <- dd %>% ggplot(aes(x = day, y = incident_inf_cases, color = "Incident infectious \n cases per day")) +
-  geom_line() +
-  geom_line(aes(x = day, y = pos, color = "Newly confirmed cases per day")) +
-  geom_line(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
-  geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed \n daily deaths"))+
-  # geom_line(aes(x = day, y = prevalence_per_thousand, color = "Prevalence per thousand")) +
-  labs(x = "Time (days)", y = "People")
-inc_plot
-
-prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed (Ascertained) \n prevalent cases"))+
-  geom_line() +
-  geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
-  labs(x = "Time (days)", y = "People")
-prev_plot
-
-# prop_ascertained_plot <- dd %>% 
-#   ggplot(aes(x = day, y = observed_prevalent_cases/prevalent_cases, color =
-#                "Proportion of true positives \n which are ascertained")) +
-#   geom_line() +
-#   labs(x = "Time (days)", y = "Proportion")
-# prop_ascertained_plot
+  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
+  geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
+  scale_colour_manual(values=cbPalette) +
+  labs(title = "Impact of positive tests on test demand", x = 'Time (days)', y = "Tests") 
+testing_plot
 
 
