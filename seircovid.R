@@ -68,7 +68,7 @@ sigma_m = 1/32  #4,12 mild to critical    # citing The Novel Coronavirus Pneumon
 gamma_m = 1/8  #5,10 mild to recovery positive     # about 1/5 symptomatic cases become critical
 gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
-gamma_r = 1/3  #recover to negative 
+gamma_r = 1/10  #recover to negative 
   
   
 mu_c = 1/40   #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
@@ -81,10 +81,10 @@ r = 1         #reduction in "infectiousness" due to ascertainment
 
 
 ########### testing ##################
-tests_conducted = rep(100, length(timesteps))
+tests_conducted = rep(1000, length(timesteps))
 max_daily_test_supply = rep(1000, length(timesteps))
 
-testing_demand_feedback_strength = 5
+testing_demand_feedback_strength = 0
 testing_demand_lag = 4 #number of days
 
 # proportion of people being ascertained (demand) * some factor
@@ -93,8 +93,8 @@ compartments_to_test = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
 tested = array(dim = c(length(timesteps),length(compartments_to_test)))
 colnames(tested) = compartments_to_test
 tested <- tested %>% data.frame()
-pos<-c(0)
-neg<-c(tests_conducted[1])
+pos <- c(0)
+neg <- c(tests_conducted[1])
 tested[1,] = 0
 incident_cases = c(0)
 incident_inf_cases = c(0)
@@ -104,21 +104,20 @@ observed_prevalent_cases = c(0)
 cumulative_observed_cases = c(0)
 cumulative_observed_deaths = c(0)
 
-relHaz = matrix(nrow = length(timesteps), ncol = 8)
-colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_N", "R_P")
+relHaz = matrix(nrow = length(timesteps), ncol = length(compartments_to_test))
+colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
 relHaz = relHaz %>% data.frame()
+relHaz[,] = 1 # totally random testing
 
-for(i in 1:101){
-  relHaz[i,c("S", "E", "A", "P", "M", "C", "R_N", "R_P")] = c(1 , 1, 1, 1, 1, 1, 1, 1)}
-
-
-
-
+# for(i in 1:101){
+#   relHaz[i,c("S", "E", "A", "P", "M", "C", "R_N", "R_P")] = c(1 , 1, 1, 1, 1, 1, 1, 1)}
 
 for(t_index in seq(2,nrow(SEIR))){
+  N = sum(SEIR[t_index-1,]) - SEIR[t_index-1, "D_a"] - SEIR[t_index-1, "D_w"] - SEIR[t_index - 1, "D"]
+
+  colnames(SEIR)
   
-  N = sum(SEIR[t_index-1,1:(ncol(SEIR)-2)])
-  
+
   S = SEIR[t_index - 1, "S"]
   E = SEIR[t_index - 1, "E"]
   A = SEIR[t_index - 1, "A"]
@@ -149,48 +148,50 @@ for(t_index in seq(2,nrow(SEIR))){
   
   
   lambda = beta*(((A + P + M + C)+r*(A_a + P_a + M_a + C_a))/N)
-  lambda_w = 0   #????????
+  lambda_w = lambda / 2
   
   #####model equations ####
 
-  ####change in disease process and waiting for results ####
+  ####change in disease process and arrival of test results ####
   change_S = -lambda*S + omega*S_w
   change_E = lambda*S - alpha*m*E - (1-alpha)*m*E + omega*E_w
   change_A = alpha*m*E + alpha*m*E_w - gamma_a*A
-  change_P = (1-alpha)*m*E+ (1-alpha)*m*E_w - sigma_p*P
+  change_P = (1-alpha)*m*E + (1-alpha)*m*E_w - sigma_p*P
   change_M = sigma_p*P - sigma_m*M - gamma_m*M
-  change_C = sigma_m*M -mu_c*C -gamma_c*C
+  change_C = sigma_m*M - mu_c*C - gamma_c*C
   change_R_P = gamma_c*C + gamma_m*M + gamma_a*A - gamma_r*R_P
   change_R_N = gamma_r*R_P
   change_D = mu_c*C
   
-  change_S_w = -lambda_w*S_w -omega*S_w
-  change_E_w = -alpha*m*E_w - (1-alpha)*m*E_w + lambda_w*S_w -omega*E_w
-  change_A_w = -gamma_a*A_w -omega*A_w
-  change_P_w = -sigma*p*P_w  -omega*P_w
-  change_M_w = sigma_p*P_w- sigma_m*M_w - gamma_m*M_w  -omega*M_w
-  change_C_w = sigma_m*M_w - gamma_c*C_w - mu_c*C_w  -omega*C_w
-  change_R_Pw = gamma_m*M_w + gamma_a*A_w + gamma_c*C_w  -omega*R_Pw
+  change_S_w = -lambda_w*S_w - omega*S_w
+  change_E_w = -alpha*m*E_w - (1-alpha)*m*E_w + lambda_w*S_w - omega*E_w
+  change_A_w = -gamma_a*A_w - omega*A_w
+  change_P_w = -sigma_p*P_w  - omega*P_w
+  change_M_w = sigma_p*P_w - sigma_m*M_w - gamma_m*M_w  - omega*M_w
+  change_C_w = sigma_m*M_w - gamma_c*C_w - mu_c*C_w  - omega*C_w
+  change_R_Pw = gamma_m*M_w + gamma_a*A_w + gamma_c*C_w  - omega*R_Pw
   change_R_Nw = -omega*R_Nw
-  change_D_w =  mu_c*C_w -omega*D_w
+  change_D_w =  mu_c*C_w - omega*D_w
     
   change_A_a =  omega*A_w
   change_P_a = -sigma_p*P_a - gamma_a*P_a + omega*P_w
   change_M_a = -sigma_m*M_a - gamma_m*M_a + sigma_p*P_a + omega*M_w
   change_C_a = sigma_m*M_a -gamma_c*C_a - mu_c*C_a + omega*C_w
-  change_R_P_a = gamma_c*C_a + gamma_m*M_a + gamma_a*P_a + omega*R_Pw
-  change_R_N_a = omega*R_Nw
+  change_R_Pa = gamma_c*C_a + gamma_m*M_a + gamma_a*P_a + omega*R_Pw
+  change_R_Na = omega*R_Nw
   change_D_a = mu_c*C_a + omega*D_w
   
   
-  rateofchange_diseaseandwaiting <- c(change_S, change_E, change_A, change_P, change_M, change_C, change_R_P, change_R_N, change_D,
-                                      change_S_w, change_E_w, change_A_w, change_P_w, change_M_w, change_C_w, change_R_Pw, change_R_Nw, change_D_w,
-                                                              change_A_a, change_P_a, change_M_a, change_C_a, change_R_Pa, change_R_Na, change_D_a)
+  rateofchange_diseaseandwaiting <- c(change_S, change_E, change_A, change_P,
+                                      change_M, change_C, change_R_P,
+                                      change_R_N, change_D, change_S_w,
+                                      change_E_w, change_A_w, change_P_w,
+                                      change_M_w, change_C_w, change_R_Pw,
+                                      change_R_Nw, change_D_w, change_A_a,
+                                      change_P_a, change_M_a, change_C_a,
+                                      change_R_Pa, change_R_Na, change_D_a)
   
   SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_diseaseandwaiting *1/timestep_reduction
-  
-  
-  
   
   
   ###### calc number of samples to be collected ######
@@ -202,15 +203,13 @@ for(t_index in seq(2,nrow(SEIR))){
     tests_conducted[t_index] = elibible_pop
   }
   tested_per_group = assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz[t_index,])
-  
   tested[t_index, ] <- tested_per_group
-  neg<-append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R_N"]))
-  pos<-append(pos, sum(tested[t_index,"A"],tested[t_index,"P"],tested[t_index,"M"],tested[t_index,"C"],tested[t_index,"R_P"] ))
+  neg <- append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R_N"]))
+  pos <- append(pos, sum(tested[t_index,"A"],tested[t_index,"P"],tested[t_index,"M"],tested[t_index,"C"],tested[t_index,"R_P"] ))
   incident_cases <- append(incident_cases, S*lambda)
   incident_inf_cases <- append(incident_inf_cases,  m*E)
   prevalent_cases <- append(prevalent_cases, sum(A, A_a, P, P_a, M, M_a, C, C_a))
   observed_prevalent_cases <- append(observed_prevalent_cases, sum(A, P, M, C))
-  
   
   
   ###### test samples collected changes ####
@@ -238,8 +237,8 @@ for(t_index in seq(2,nrow(SEIR))){
   change_sample_P_a = 0
   change_sample_M_a = 0
   change_sample_C_a = 0
-  change_sample_R_P_a = 0
-  change_sample_R_N_a = 0
+  change_sample_R_Pa = 0
+  change_sample_R_Na = 0
   change_sample_D_a = 0
 
   rates_change_samples <- c(change_sample_S, change_sample_E, change_sample_A, change_sample_P, change_sample_M, change_sample_C, change_sample_R_P, change_sample_R_N, change_sample_D,
@@ -256,7 +255,6 @@ for(t_index in seq(2,nrow(SEIR))){
     min(tests_conducted[t_index + testing_demand_lag] +
           future_test_demand, max_daily_test_supply[t_index + testing_demand_lag])
   
-
 }
 
 tests_conducted = tests_conducted[1:length(timesteps)] #dirty fix for demand driven testing making this vector too long

@@ -27,6 +27,13 @@ assignTests <- function(numTests, state, relHaz, mult=1.1){
 	return(numTests*place/sum(place))
 }
 
+# numTests = tests_conducted[t_index]
+# state = SEIR[t_index, names(relHaz)]
+# relHaz = relHaz[t_index,]
+# 
+# assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz[t_index,])
+
+
 assignTests(
 	numTests <- 180
 	, state <- c("a" = 100,"b" = 100)
