@@ -83,7 +83,7 @@ r = 1         #reduction in "infectiousness" due to ascertainment
 tests_conducted = rep(100, length(timesteps))
 max_daily_test_supply = rep(1000, length(timesteps))
 
-testing_demand_feedback_strength = 2
+testing_demand_feedback_strength = 5
 testing_demand_lag = 4 #number of days
 
 # proportion of people being ascertained (demand) * some factor
@@ -197,7 +197,7 @@ for(t_index in seq(2,nrow(SEIR))){
   
   if(elibible_pop < tests_conducted[t_index]){
     print(sprintf("%s tests planned, but only %s individuals with nonzero hazards of being tested", tests_conducted[t_index], elibible_pop))
-    tests_conducted[t_index] = elibible_pop
+    tests_conducted[t_index] = elibible_pop - 0.01 
   }
   tested_per_group = assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz[t_index,])
   tested[t_index, ] <- tested_per_group
