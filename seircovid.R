@@ -186,7 +186,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_R_Nw = - omega*R_Nw
   change_D_w =  mu_c*C_w - omega*D_w
     
-  change_A_a =  omega*A_w
+  change_A_a =  omega*A_w - gamma_a*A_a
   change_P_a = -sigma_p*P_a - gamma_a*P_a + omega*P_w
   change_M_a = -sigma_m*M_a - gamma_m*M_a + sigma_p*P_a + omega*M_w
   change_C_a = sigma_m*M_a -gamma_c*C_a - mu_c*C_a + omega*C_w
@@ -276,18 +276,18 @@ for(t_index in seq(2,nrow(SEIR))){
   non_ascertained_prevalent_cases <-append(non_ascertained_prevalent_cases, sum (A,P, M, C))
   
   
-  ####sample accumulator####
+  #### sample accumulator ####
   #move into waiting compartments
   #rate of ascertainment = psi
   
+  # prevalence of waiting compartments
+  
   #how to plot the backlog?
   
-  ####test accumulator#####
-  #move into ascertained compartments 
+  ####results accumulator#####
+  #move into ascertained compartments
   #rate of test reults = omega
-  
-  
-  
+
 }
 
 
@@ -358,7 +358,7 @@ prop_pos_plot <- dd %>%
 
 
  prevalence_plot <- dd %>%
-   ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence"))+
+   ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence")) +
    geom_line() +
    labs(x = "Time (days)", y = "Cases per thousand population")
  prevalence_plot
@@ -374,7 +374,7 @@ prop_pos_plot <- dd %>%
   geom_line(aes(x = day, y = D + D_w + D_a, color = "Dead")) +
   labs(y = "Prevalent Cases", x = "Time (days)")
 outbreak_plot
-# 
+
 # mortality_plot <- dd %>%
 #   ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
 #   geom_line() +
