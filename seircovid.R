@@ -113,10 +113,10 @@ non_ascertained_prevalent_cases =c(0)
 
 cumulative_observed_cases = c(0)
 cumulative_observed_deaths = c(0)
-
-
-
-
+waitingcompartments <- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
+test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartments)))
+test_results_returned[1,] <- 0
+colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 
 relHaz = matrix(nrow = length(timesteps), ncol = length(compartments_to_test))
 colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
@@ -186,7 +186,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_R_Nw = -omega*R_Nw
   change_D_w =  mu_c*C_w - omega*D_w
     
-  change_A_a =  omega*A_w
+  change_A_a =  omega*A_w - gamma_a*A_a
   change_P_a = -sigma_p*P_a - gamma_a*P_a + omega*P_w
   change_M_a = -sigma_m*M_a - gamma_m*M_a + sigma_p*P_a + omega*M_w
   change_C_a = sigma_m*M_a -gamma_c*C_a - mu_c*C_a + omega*C_w
@@ -205,6 +205,8 @@ for(t_index in seq(2,nrow(SEIR))){
   
   SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_diseaseandwaiting *1/timestep_reduction
   
+  
+  test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
   
   ###### calc number of samples to be collected ######
   elibible_pop = sum(SEIR[t_index, names(relHaz)]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
@@ -279,6 +281,10 @@ for(t_index in seq(2,nrow(SEIR))){
   ####sample accumulator####
   #move into waiting compartments
   #rate of ascertainment = psi
+  
+  #
+  
+  
   
   #how to plot the backlog?
   
