@@ -7,7 +7,7 @@ library(tidyverse)
 library(extraDistr)
 
 tstart=0
-tend=200
+tend=150
 timestep_reduction = 1
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
@@ -18,7 +18,7 @@ colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D",
                    "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a")
 
 #####initial population sizes######
-S0 = 9997
+S0 = 1009997
 E0 = 3
 A0 = 0
 P0 = 0
@@ -57,7 +57,7 @@ N0 = sum(SEIR[1,])
 # mu = death rates
 # omega = 1/ waiting time for results 
 
-beta = 0.8 
+beta = 0.4 
 alpha = .25  #2,7 proportion asymptomatic
 m = 1/3.69     #2,7 1/latency duration
 
@@ -80,10 +80,10 @@ r = 1         #reduction in "infectiousness" due to ascertainment
 
 
 ########### testing ##################
-tests_conducted = rep(100, length(timesteps))
-max_daily_test_supply = rep(1000, length(timesteps))
+tests_conducted = rep(1000, length(timesteps))
+max_daily_test_supply = rep(20000, length(timesteps))
 
-testing_demand_feedback_strength = 5 #number of days
+testing_demand_feedback_strength = 2
 testing_demand_lag = 4 #number of days
 # proportion of people being ascertained (demand) * some factor
 
@@ -113,6 +113,7 @@ non_ascertained_prevalent_cases =c(0)
 
 cumulative_observed_cases = c(0)
 cumulative_observed_deaths = c(0)
+
 waitingcompartments <- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartments)))
 test_results_returned[1,] <- 0
@@ -292,10 +293,7 @@ for(t_index in seq(2,nrow(SEIR))){
 
 }
 
-
 tests_conducted = tests_conducted[1:length(timesteps)] #dirty fix for demand driven testing making this vector too long
-
-
 
 
 n_alive = SEIR %>%
@@ -322,13 +320,15 @@ dd <- SEIR %>%
   mutate(cumulative_confirmed_cases = cumsum(positive_tests)) %>%
   mutate(prop_positive = positive_tests/tests_conducted)%>%
   mutate(cumulative_incidence = cumsum(incident_cases)) %>%
-  mutate(max_daily_test_supply = max_daily_test_supply)
+  mutate(max_daily_test_supply = max_daily_test_supply) %>%
+  mutate(test_results_returned = rowSums(test_results_returned))
 
 testing_plot <- dd %>%
   ggplot(aes(x = day, y = tests_conducted, color = "Tests conducted")) +
   geom_line() +
   geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
   geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
+  geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
   labs(title = "Impact of positive tests on test demand", x = 'Time (days)', y = "Tests")
 testing_plot
 
