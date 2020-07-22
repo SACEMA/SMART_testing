@@ -168,7 +168,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_M_w = sigma_p*P_w - sigma_m*M_w - gamma_m*M_w  - omega*M_w
   change_C_w = sigma_m*M_w - gamma_c*C_w - mu_c*C_w  - omega*C_w
   change_R_Pw = gamma_m*M_w + gamma_a*A_w + gamma_c*C_w  - omega*R_Pw
-  change_R_Nw = -omega*R_Nw
+  change_R_Nw = - omega*R_Nw
   change_D_w =  mu_c*C_w - omega*D_w
     
   change_A_a =  omega*A_w
@@ -253,6 +253,7 @@ for(t_index in seq(2,nrow(SEIR))){
   
 }
 
+
 tests_conducted = tests_conducted[1:length(timesteps)] #dirty fix for demand driven testing making this vector too long
 
 n_alive = SEIR %>%
@@ -266,7 +267,7 @@ dd <- SEIR %>%
   mutate(incident_cases = incident_cases) %>%
   mutate(incident_inf_cases = incident_inf_cases) %>%
   mutate(tests_conducted = tests_conducted) %>%
-  mutate(prevalent_cases = rowSums(SEIR[,c("P_a","A_a","M_a","C_a","P","A","M","C")])) %>%
+  mutate(prevalent_cases = rowSums(SEIR[,c("P_a","A_a","M_a","C_a","P","A","M","C")])) %>%coo
   mutate(observed_prevalent_cases = rowSums(SEIR[,c("P_a","A_a","M_a","C_a")])) %>%
   mutate(eligible_pop = eligible_pop_t ) %>% #rowSums(SEIR[,c("S","E","I_p","I_a","I_m","I_c","R")])
   mutate(prevalent_cases_non_ascertained = rowSums(SEIR[,c("P","A","M","C")])) %>%
