@@ -113,10 +113,10 @@ non_ascertained_prevalent_cases =c(0)
 
 cumulative_observed_cases = c(0)
 cumulative_observed_deaths = c(0)
-
-
-
-
+waitingcompartments <- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
+test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartments)))
+test_results_returned[1,] <- 0
+colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 
 relHaz = matrix(nrow = length(timesteps), ncol = length(compartments_to_test))
 colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
@@ -205,6 +205,8 @@ for(t_index in seq(2,nrow(SEIR))){
   
   SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_diseaseandwaiting *1/timestep_reduction
   
+  
+  test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
   
   ###### calc number of samples to be collected ######
   elibible_pop = sum(SEIR[t_index, names(relHaz)]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
