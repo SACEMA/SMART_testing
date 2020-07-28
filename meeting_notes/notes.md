@@ -183,3 +183,8 @@ General consideration
 * W_s go back right to S.
 * should have a mechanism for reducing mixing rates of everyone in W compartments.
 * meetings at 5.30 going forward.
+
+### Meeting 2020-07-22
+
+* how were/are deaths from suspected covid (without being tested) classified?
+* case definition in SA has been exclusively with PCR confirmation. write this clearly - "would not be counted unless they had pcr confirmation before they died"
