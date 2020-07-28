@@ -11,11 +11,11 @@ tend=150
 timestep_reduction = 1
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
-variables = 24 
+variables = 25
 SEIR = array(dim = c(length(timesteps),variables))
 colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D", 
                    "S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w", 
-                   "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a")
+                   "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a", "daily_deaths")
 
 #####initial population sizes######
 S0 = 1009997
@@ -27,6 +27,7 @@ C0 =  0
 R_P0 = 0
 R_N0 = 0
 D0 = 0
+dailydeaths0 = 0
 #waiting compartment initial popualtion sizes
 S_w0 = 0
 E_w0 = 0
@@ -45,7 +46,7 @@ C_a0 =  0
 R_Pa0 = 0
 D_a0 = 0
 
-SEIR[1,] = c(S0, E0, A0, P0, M0, C0, R_P0, R_N0, D0, S_w0, E_w0, A_w0, P_w0, M_w0, C_w0, R_Pw0, R_Nw0, D_w0, A_a0, P_a0, M_a0, C_a0, R_Pa0, D_a0)
+SEIR[1,] = c(S0, E0, A0, P0, M0, C0, R_P0, R_N0, D0, S_w0, E_w0, A_w0, P_w0, M_w0, C_w0, R_Pw0, R_Nw0, D_w0, A_a0, P_a0, M_a0, C_a0, R_Pa0, D_a0, dailydeaths0)
 N0 = sum(SEIR[1,])
 
 
@@ -88,9 +89,11 @@ testing_demand_lag = 4 #number of days
 # proportion of people being ascertained (demand) * some factor
 
 
+rateofchange_diseaseandwaiting = c()
+#to track the number of people moving into the dead compartment each day 
+people_died_eachday = c(0)
 
-
-compartments_to_test = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
+compartments_to_test = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "daily_deaths")
 tested = array(dim = c(length(timesteps),length(compartments_to_test)))
 colnames(tested) = compartments_to_test
 tested <- tested %>% data.frame()
@@ -120,7 +123,7 @@ test_results_returned[1,] <- 0
 colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 
 relHaz = matrix(nrow = length(timesteps), ncol = length(compartments_to_test))
-colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N")
+colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "daily_deaths")
 relHaz = relHaz %>% data.frame()
 relHaz[,] = 1 # totally random testing
 
@@ -195,16 +198,17 @@ for(t_index in seq(2,nrow(SEIR))){
   change_D_a = mu_c*C_a + omega*D_w
   
   
-  rateofchange_diseaseandwaiting <- c(change_S, change_E, change_A, change_P,
-                                      change_M, change_C, change_R_P,
-                                      change_R_N, change_D, change_S_w,
-                                      change_E_w, change_A_w, change_P_w,
-                                      change_M_w, change_C_w, change_R_Pw,
-                                      change_R_Nw, change_D_w, change_A_a,
-                                      change_P_a, change_M_a, change_C_a,
-                                      change_R_Pa, change_D_a)
+  rateofchange_diseaseandwaiting <- c(change_S[[1]], change_E[[1]], change_A[[1]], change_P[[1]],
+                                      change_M[[1]], change_C[[1]], change_R_P[[1]],
+                                      change_R_N[[1]], change_D[[1]], change_S_w[[1]],
+                                      change_E_w[[1]], change_A_w[[1]], change_P_w[[1]],
+                                      change_M_w[[1]], change_C_w[[1]], change_R_Pw[[1]],
+                                      change_R_Nw[[1]], change_D_w[[1]], change_A_a[[1]],
+                                      change_P_a[[1]], change_M_a[[1]], change_C_a[[1]],
+                                      change_R_Pa[[1]], change_D_a[[1]])
   
-  SEIR[t_index,] = SEIR[t_index-1,] + rateofchange_diseaseandwaiting *1/timestep_reduction
+  SEIR[t_index,1:24] = SEIR[t_index-1,1:24] + rateofchange_diseaseandwaiting *1/timestep_reduction
+  SEIR[t_index,25] = SEIR[t_index,9] - SEIR[t_index-1,9]
   
   
   test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
@@ -234,7 +238,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_sample_C = -tested[t_index,"C"] 
   change_sample_R_P = -tested[t_index,"R_P"] 
   change_sample_R_N = -tested[t_index,"R_N"] 
-  change_sample_D = 0
+  change_sample_D = -tested[t_index,"daily_deaths"] 
   
   change_sample_S_w = tested[t_index,"S"] 
   change_sample_E_w = tested[t_index,"E"] 
@@ -244,7 +248,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_sample_C_w = tested[t_index,"C"] 
   change_sample_R_Pw = tested[t_index,"R_P"] 
   change_sample_R_Nw = tested[t_index,"R_N"] 
-  change_sample_D_w =  0
+  change_sample_D_w =  tested[t_index,"daily_deaths"] 
   
   change_sample_A_a = 0
   change_sample_P_a = 0
@@ -255,9 +259,9 @@ for(t_index in seq(2,nrow(SEIR))){
 
   rates_change_samples <- c(change_sample_S, change_sample_E, change_sample_A, change_sample_P, change_sample_M, change_sample_C, change_sample_R_P, change_sample_R_N, change_sample_D,
        change_sample_S_w, change_sample_E_w, change_sample_A_w, change_sample_P_w, change_sample_M_w, change_sample_C_w, change_sample_R_Pw, change_sample_R_Nw, change_sample_D_w,
-       change_sample_A_a, change_sample_P_a, change_sample_M_a, change_sample_C_a, change_sample_R_Pa, change_sample_D_a)
+       change_sample_A_a, change_sample_P_a, change_sample_M_a, change_sample_C_a, change_sample_R_Pa, change_sample_D_a,0)
 
-  SEIR[t_index, ] = SEIR[t_index, ] + rates_change_samples
+  SEIR[t_index,] = SEIR[t_index,] + rates_change_samples
   
   
   
