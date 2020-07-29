@@ -188,3 +188,10 @@ General consideration
 
 * how were/are deaths from suspected covid (without being tested) classified?
 * case definition in SA has been exclusively with PCR confirmation. write this clearly - "would not be counted unless they had pcr confirmation before they died"
+* have a box when people die.
+
+### Jnr meeting 2020-07-28
+
+* Q how long after death do people test PCR positive?
+* Jeremy bug people
+* scenarios: public/private, and community/passive

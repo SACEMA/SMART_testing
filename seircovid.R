@@ -81,11 +81,8 @@ r = 1         #reduction in "infectiousness" due to ascertainment
 
 
 ########### testing ##################
-tests_conducted = rep(1000, length(timesteps))
-max_daily_test_supply = rep(20000, length(timesteps))
-
-testing_demand_feedback_strength = 2
-testing_demand_lag = 4 #number of days
+source('s1.R')
+source('s2.R')
 # proportion of people being ascertained (demand) * some factor
 
 
@@ -107,7 +104,7 @@ tested[1,] = 0 #no-one tetsed on the first day
 eligible_pop_t = c(sum(SEIR[1,compartments_to_test]))
 
 incident_cases = c(0)
-incident_inf_cases = c(0)
+incident_in_cases = c(0)
 
 total_prevalent_cases = c(0)
 waiting_prevalent_cases  = c(0)
@@ -121,14 +118,6 @@ waitingcompartments <- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw
 test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartments)))
 test_results_returned[1,] <- 0
 colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
-
-relHaz = matrix(nrow = length(timesteps), ncol = length(compartments_to_test))
-colnames(relHaz) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "daily_deaths")
-relHaz = relHaz %>% data.frame()
-relHaz[,] = 1 # totally random testing
-
-# for(i in 1:101){
-#   relHaz[i,c("S", "E", "A", "P", "M", "C", "R_N", "R_P")] = c(1 , 1, 1, 1, 1, 1, 1, 1)}
 
 for(t_index in seq(2,nrow(SEIR))){
   N = sum(SEIR[t_index-1,]) - SEIR[t_index-1, "D_a"] - SEIR[t_index-1, "D_w"] - SEIR[t_index - 1, "D"]
