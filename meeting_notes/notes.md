@@ -1,3 +1,9 @@
+## Ongoing issues:
+
+* parameter values for getting a roughly realistic curve (beta is a suspect)
+* 
+
+
 SMART-testing June 04 2020
 =================
 
@@ -195,3 +201,4 @@ General consideration
 * Q how long after death do people test PCR positive?
 * Jeremy bug people
 * scenarios: public/private, and community/passive
+* simplest 

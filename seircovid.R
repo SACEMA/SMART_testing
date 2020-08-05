@@ -5,9 +5,9 @@ rm(list=ls(all=TRUE))
 source("hazard.R")
 library(tidyverse)
 library(extraDistr)
-
+scenario_file <- "./scenarios/s1.R"
 tstart=0
-tend=150
+tend=290
 timestep_reduction = 1
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
@@ -17,8 +17,11 @@ colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D",
                    "S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w", 
                    "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a", "daily_deaths")
 
+# source('./scenarios/s1.R')
+source('./scenarios/s2.R')
+
 #####initial population sizes######
-S0 = 1009997
+S0 = 58000000 - 3
 E0 = 3
 A0 = 0
 P0 = 0
@@ -58,7 +61,7 @@ N0 = sum(SEIR[1,])
 # mu = death rates
 # omega = 1/ waiting time for results 
 
-beta = 0.4 
+beta = 0.3
 alpha = .25  #2,7 proportion asymptomatic
 m = 1/3.69     #2,7 1/latency duration
 
@@ -75,25 +78,18 @@ mu_c = 1/40   #20,14 critical to death      # about a quarter of critical cases 
 
 omega = 1/4 #1/waiting time for results
 
-r = 1         #reduction in "infectiousness" due to ascertainment
-
-
-
-
-########### testing ##################
-source('s1.R')
-source('s2.R')
-# proportion of people being ascertained (demand) * some factor
+r = 0.5        #reduction in "infectiousness" due to ascertainment
 
 
 rateofchange_diseaseandwaiting = c()
 #to track the number of people moving into the dead compartment each day 
 people_died_eachday = c(0)
 
-compartments_to_test = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "daily_deaths")
-tested = array(dim = c(length(timesteps),length(compartments_to_test)))
-colnames(tested) = compartments_to_test
-tested <- tested %>% data.frame()
+
+########### testing ##################
+
+source(scenario_file)
+# proportion of people being ascertained (demand) * some factor
 
 ####Creating arrays/ lists for outputs####
 
@@ -264,7 +260,7 @@ for(t_index in seq(2,nrow(SEIR))){
   
   #### some outputs to save #####
   incident_cases <- append(incident_cases, S*lambda) #what about S_w ?
-  incident_inf_cases <- append(incident_inf_cases,  m*E) #what about E_w ?
+  # incident_inf_cases <- append(incident_inf_cases,  m*E) #what about E_w ?
   
   total_prevalent_cases <- append(total_prevalent_cases, sum(A, A_w, A_a, P, P_w, P_a, M, M_w, M_a, C, C_w, C_a))
   waiting_prevalent_cases <- append(waiting_prevalent_cases, sum(A_w, P_w, M_w, C_w))
@@ -298,7 +294,7 @@ dd <- SEIR %>%
   data.frame() %>%
   mutate(positive_tests = pos, day = 1:nrow(SEIR)) %>%
   mutate(incident_cases = incident_cases) %>%  #S*lambda
-  mutate(incident_inf_cases = incident_inf_cases) %>% #m*E
+  # mutate(incident_inf_cases = incident_inf_cases) %>% #m*E
   mutate(tests_conducted = tests_conducted) %>%
   mutate(total_prevalent_cases = total_prevalent_cases) %>%
   mutate(waiting_prevalent_cases = waiting_prevalent_cases) %>%
@@ -316,47 +312,51 @@ dd <- SEIR %>%
   mutate(max_daily_test_supply = max_daily_test_supply) %>%
   mutate(test_results_returned = rowSums(test_results_returned))
 
-testing_plot <- dd %>%
-  ggplot(aes(x = day, y = tests_conducted, color = "Tests conducted")) +
-  geom_line() +
-  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
-  geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
-  geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
-  labs(title = "Impact of positive tests on test demand", x = 'Time (days)', y = "Tests")
-testing_plot
 
-test_efficacy_plot <- dd %>%
-  ggplot(aes(x = day, y = non_ascertained_prevalent_cases, color = 'Prevalent cases, non-ascertained')) +
-   geom_line() +
-   geom_line(aes(x = day, y = eligible_pop, color = 'Population eligible for testing'))
- test_efficacy_plot
-#
+# test_efficacy_plot <- dd %>%
+#   ggplot(aes(x = day, y = non_ascertained_prevalent_cases, color = 'Prevalent cases, non-ascertained')) +
+#    geom_line() +
+#    geom_line(aes(x = day, y = eligible_pop, color = 'Population eligible for testing'))
+# test_efficacy_plot
+
 # test_efficacy_plot_relative <- dd %>%
 #   ggplot(aes(x = day, y = prevalent_cases_non_ascertained/eligible_pop, color = 'Prevalence among \n people eligible for testing')) +
 #   geom_line() +
 #   geom_line(aes(x = day, y = prop_positive, color = 'Proportion positive'))
 # test_efficacy_plot_relative
-#
+
+testing_plot <- dd %>%
+  ggplot(aes(x = day, y = tests_conducted, color = "Samples collected")) +
+  geom_line() +
+  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
+  # geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
+  geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
+  labs(title = "Tests conducted", x = 'Time (days)', y = "Tests")
+testing_plot
+
 prop_pos_plot <- dd %>%
   ggplot(aes(x = day, y = prop_positive, color = "Proportion of tests \n which come back positive")) +
   geom_line() +
-  geom_line(aes(x= day, y = prevalence_per_thousand/1000, color = "Prevalence per \n million"))
- prop_pos_plot
-#
-#  cumulative_plot <- dd %>%
-#    ggplot(aes(x = day, y = cumulative_confirmed_cases, color = "Cumulative ascertained cases")) +
-#    geom_line()+
-#    # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
-#    geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
-#    labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths")
-#  cumulative_plot
+  geom_line(aes(x= day, y = prevalence_per_thousand/1000, color = "Prevalence")) +
+  geom_line(aes(x = day, y = ascertained_prevalent_cases/n_alive, color = "Ascertained prevalence"))
+prop_pos_plot
+
+cumulative_plot <- dd %>%
+ ggplot(aes(x = day, y = cumulative_confirmed_cases,
+            color = "Cumulative ascertained cases")) +
+ geom_line()+
+ # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
+ geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
+ labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths")
+cumulative_plot
 
 
- prevalence_plot <- dd %>%
+prevalence_plot <- dd %>%
    ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence")) +
    geom_line() +
-   labs(x = "Time (days)", y = "Cases per thousand population")
- prevalence_plot
+   labs(x = "Time (days)", y = "Cases per thousand population",
+        title = "Prevalence per thousand population")
+prevalence_plot
 
  
  outbreak_plot <- dd %>%
