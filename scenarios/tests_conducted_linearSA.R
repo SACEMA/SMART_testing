@@ -1,16 +1,16 @@
 # tests-conducted: linear approximation to SA
 
 # import SA testing data
-dd_tests <- read_csv()
+source('./scenarios/sa_testing.R')
+
 # fit linear prediction
-lm(tests ~ day_since_first_case)
+linear_fit <- lm(daily_tests ~ 0 + day, data = dd_test)
 # initial number of cases? 3 cases, on day of first detection.
 
+tests_conducted = (1:length(timesteps)) * linear_fit$coefficients[1]
 # tests_conducted <- **formula of lm manually written out, or lm.predict(days)
-tests_conducted = rep(1000, length(timesteps))
 
-
-max_daily_test_supply = rep(20000, length(timesteps))
+max_daily_test_supply = rep(2e5, length(timesteps))
 
 testing_demand_feedback_strength = 0
 testing_demand_lag = 4 #number of days

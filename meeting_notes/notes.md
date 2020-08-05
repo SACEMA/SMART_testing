@@ -1,6 +1,6 @@
 ## Ongoing issues:
 
-* parameter values for getting a roughly realistic curve (beta is a suspect)
+* parameter values for getting a roughly realistic curve (currently extremely high cumulative prevalence)
 * 
 
 

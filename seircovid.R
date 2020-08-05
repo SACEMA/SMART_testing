@@ -6,8 +6,8 @@ source("hazard.R")
 library(tidyverse)
 library(extraDistr)
 scenario_file <- "./scenarios/s1.R"
-tstart=0
-tend=290
+tstart = 0
+tend = 250
 timestep_reduction = 1
 timesteps = seq(tstart, tend, 1/timestep_reduction)
 
@@ -17,12 +17,12 @@ colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D",
                    "S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w", 
                    "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a", "daily_deaths")
 
-# source('./scenarios/s1.R')
-source('./scenarios/s2.R')
+source('./scenarios/s1.R')
+# source('./scenarios/s2.R')
 
 #####initial population sizes######
-S0 = 58000000 - 3
-E0 = 3
+S0 = 58000000 - 50
+E0 = 50
 A0 = 0
 P0 = 0
 M0 =  0
@@ -61,7 +61,7 @@ N0 = sum(SEIR[1,])
 # mu = death rates
 # omega = 1/ waiting time for results 
 
-beta = 0.3
+beta = 0.4
 alpha = .25  #2,7 proportion asymptomatic
 m = 1/3.69     #2,7 1/latency duration
 
@@ -71,14 +71,14 @@ sigma_m = 1/32  #4,12 mild to critical    # citing The Novel Coronavirus Pneumon
 gamma_m = 1/8  #5,10 mild to recovery positive     # about 1/5 symptomatic cases become critical
 gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
-gamma_r = 1/10  #recover to negative 
-  
-  
-mu_c = 1/40   #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
+gamma_r = 1/10  #recover to negative
+
+
+mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
 
 omega = 1/4 #1/waiting time for results
 
-r = 0.5        #reduction in "infectiousness" due to ascertainment
+r = 1     #reduction in "infectiousness" due to ascertainment
 
 
 rateofchange_diseaseandwaiting = c()
@@ -115,9 +115,11 @@ test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartm
 test_results_returned[1,] <- 0
 colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 
+n_tmp <- c(N0,rep(0,length(timesteps) - 1))
+
 for(t_index in seq(2,nrow(SEIR))){
   N = sum(SEIR[t_index-1,]) - SEIR[t_index-1, "D_a"] - SEIR[t_index-1, "D_w"] - SEIR[t_index - 1, "D"]
-
+  n_tmp[t_index] = sum(SEIR[t_index - 1,1:24])
   colnames(SEIR)
   
 
@@ -150,7 +152,7 @@ for(t_index in seq(2,nrow(SEIR))){
   
   
   lambda = beta*(((A + P + M + C)+r*(A_a + P_a + M_a + C_a))/N)
-  lambda_w = lambda / 2
+  lambda_w = lambda / 1
   
   #####model equations ####
 
@@ -182,6 +184,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_R_Pa = gamma_c*C_a + gamma_m*M_a + gamma_a*P_a + omega*R_Pw
   change_D_a = mu_c*C_a + omega*D_w
   
+  test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
   
   rateofchange_diseaseandwaiting <- c(change_S[[1]], change_E[[1]], change_A[[1]], change_P[[1]],
                                       change_M[[1]], change_C[[1]], change_R_P[[1]],
@@ -192,11 +195,9 @@ for(t_index in seq(2,nrow(SEIR))){
                                       change_P_a[[1]], change_M_a[[1]], change_C_a[[1]],
                                       change_R_Pa[[1]], change_D_a[[1]])
   
+
   SEIR[t_index,1:24] = SEIR[t_index-1,1:24] + rateofchange_diseaseandwaiting *1/timestep_reduction
   SEIR[t_index,25] = SEIR[t_index,9] - SEIR[t_index-1,9]
-  
-  
-  test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
   
   ###### calc number of samples to be collected ######
   elibible_pop = sum(SEIR[t_index, names(relHaz)]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
@@ -211,8 +212,6 @@ for(t_index in seq(2,nrow(SEIR))){
   tested[t_index, ] <- tested_per_group
   neg <- append(neg, sum(tested[t_index,"S"],tested[t_index,"E"],tested[t_index,"R_N"]))
   pos <- append(pos, sum(tested[t_index,"A"],tested[t_index,"P"],tested[t_index,"M"],tested[t_index,"C"],tested[t_index,"R_P"] ))
-  
- 
   
   ###### test samples collected changes ####
   change_sample_S = -tested[t_index,"S"] 
@@ -248,15 +247,11 @@ for(t_index in seq(2,nrow(SEIR))){
 
   SEIR[t_index,] = SEIR[t_index,] + rates_change_samples
   
-  
-  
   #### sample collection demand feedback ######
   future_test_demand = pos[length(pos)] * testing_demand_feedback_strength
   tests_conducted[t_index + testing_demand_lag] =
     min(tests_conducted[t_index + testing_demand_lag] +
           future_test_demand, max_daily_test_supply[t_index + testing_demand_lag])
-  
-  
   
   #### some outputs to save #####
   incident_cases <- append(incident_cases, S*lambda) #what about S_w ?
@@ -390,6 +385,8 @@ outbreak_plot
 #   geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
 #   labs(x = "Time (days)", y = "People")
 # prev_plot
+
+plot(timesteps, n_tmp)
 
 # prop_ascertained_plot <- dd %>% 
 #   ggplot(aes(x = day, y = observed_prevalent_cases/prevalent_cases, color =
