@@ -33,10 +33,16 @@ assignTests <- function(numTests, state, relHaz, mult=1.1){
 # 
 # assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz[t_index,])
 
-
 assignTests(
 	numTests <- 180
 	, state <- c("a" = 100,"b" = 100)
-	, relHaz <- c("a" = 1,"b" = 1)
+	, relHaz <- c("a" = 1,"b" = 3)
+)
+
+
+assignTests(
+	numTests <- 18
+	, state <- c("a" = 100,"b" = 100)
+	, relHaz <- c("a" = 1,"b" = 3)
 )
 
