@@ -3,6 +3,22 @@
 * parameter values for getting a roughly realistic curve (currently extremely high cumulative prevalence)
 * 
 
+## Brainstorm for how to infer true incidence from confirmed case counts
+* depends on testing done, and percentage of tests which are positive
+* clearly describe what information we are allowed to use...
+
+
+* basic output: proportion positive \times popsize (upper bound; should be equal to true prevalence when testing is totally random)
+* 
+
+* relative hazards are assuming that similar symptoms come up in rest of population...
+* test positivity
+* allocate tests to specific groups
+* most obvious: test positivity \times
+* get some more scenarios
+* understand relative hazards better - JB
+
+* idea: fit relative hazards, and weekly Rt (or beta or serial interval), to observed incidence...
 
 SMART-testing June 04 2020
 =================

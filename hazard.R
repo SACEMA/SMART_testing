@@ -36,7 +36,7 @@ assignTests <- function(numTests, state, relHaz, mult=1.1){
 assignTests(
 	numTests <- 180
 	, state <- c("a" = 100,"b" = 100)
-	, relHaz <- c("a" = 1,"b" = 3)
+	, relHaz <- c("a" = .000001,"b" = 3)
 )
 
 

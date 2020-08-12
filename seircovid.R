@@ -63,7 +63,9 @@ N0 = sum(SEIR[1,])
 
 beta = 0.4
 alpha = .25  #2,7 proportion asymptomatic
-m = 1/3.69     #2,7 1/latency duration
+m = 0.25 # 1/3.69     #2,7 1/latency duration
+m_w = 0.25
+omega_E = 0.25
 
 sigma_p = 1/1.75   #3,11 presymptomatic to mild
 sigma_m = 1/32  #4,12 mild to critical    # citing The Novel Coronavirus Pneumonia Emergency Response Epidemiology Team. The Epidemiological Characteristics of an Outbreak of 2019 Novel Coronavirus Diseases (COVID-19) — China, 2020[J]. China CDC Weekly, 2020, 2(8): 113-122. doi: 10.46234/ccdcw2020.032 shu
@@ -157,19 +159,19 @@ for(t_index in seq(2,nrow(SEIR))){
   #####model equations ####
 
   ####change in disease process and arrival of test results ####
-  change_S = -lambda*S + omega*S_w
-  change_E = lambda*S - alpha*m*E - (1-alpha)*m*E + omega*E_w
-  change_A = alpha*m*E + alpha*m*E_w - gamma_a*A
-  change_P = (1-alpha)*m*E + (1-alpha)*m*E_w - sigma_p*P
+  change_S = - lambda*S + omega*S_w
+  change_E = lambda*S - alpha*m*E - (1-alpha)*m*E + omega_E*E_w
+  change_A = - gamma_a*A + alpha*m*E + alpha*m_w*E_w 
+  change_P = (1-alpha)*m*E  - sigma_p*P + (1-alpha)*m_w*E_w
   change_M = sigma_p*P - sigma_m*M - gamma_m*M
   change_C = sigma_m*M - mu_c*C - gamma_c*C
   change_R_P = gamma_c*C + gamma_m*M + gamma_a*A - gamma_r*R_P
   change_R_N = gamma_r*R_P + omega*R_Nw
   change_D = mu_c*C
   
-  change_S_w = -lambda_w*S_w - omega*S_w
-  change_E_w = -alpha*m*E_w - (1-alpha)*m*E_w + lambda_w*S_w - omega*E_w
-  change_A_w = -gamma_a*A_w - omega*A_w
+  change_S_w = - lambda_w*S_w - omega*S_w
+  change_E_w = + lambda_w*S_w - omega_E*E_w - alpha*m_w*E_w - (1-alpha)*m_w*E_w
+  change_A_w = - gamma_a*A_w - omega*A_w
   change_P_w = -sigma_p*P_w  - omega*P_w
   change_M_w = sigma_p*P_w - sigma_m*M_w - gamma_m*M_w  - omega*M_w
   change_C_w = sigma_m*M_w - gamma_c*C_w - mu_c*C_w  - omega*C_w
@@ -178,13 +180,15 @@ for(t_index in seq(2,nrow(SEIR))){
   change_D_w =  mu_c*C_w - omega*D_w
     
   change_A_a =  omega*A_w - gamma_a*A_a
-  change_P_a = -sigma_p*P_a - gamma_a*P_a + omega*P_w
+  change_P_a = -sigma_p*P_a  + omega*P_w
   change_M_a = -sigma_m*M_a - gamma_m*M_a + sigma_p*P_a + omega*M_w
   change_C_a = sigma_m*M_a -gamma_c*C_a - mu_c*C_a + omega*C_w
-  change_R_Pa = gamma_c*C_a + gamma_m*M_a + gamma_a*P_a + omega*R_Pw
+  change_R_Pa = gamma_c*C_a + gamma_m*M_a  + omega*R_Pw + gamma_a*A_a
   change_D_a = mu_c*C_a + omega*D_w
   
-  test_results_returned[t_index, ] <- omega*c(S_w, E_w, A_w, P_w, M_w, C_w, R_Pw, R_Nw, D_w)
+  test_results_returned[t_index, ] <- c(omega*S_w, omega_E*E_w + m_w*E_w, omega*A_w, 
+                                        omega*P_w, omega*M_w, omega*C_w, 
+                                        omega*R_Pw, omega*R_Nw, omega*D_w)
   
   rateofchange_diseaseandwaiting <- c(change_S[[1]], change_E[[1]], change_A[[1]], change_P[[1]],
                                       change_M[[1]], change_C[[1]], change_R_P[[1]],
@@ -196,16 +200,15 @@ for(t_index in seq(2,nrow(SEIR))){
                                       change_R_Pa[[1]], change_D_a[[1]])
   
 
-  SEIR[t_index,1:24] = SEIR[t_index-1,1:24] + rateofchange_diseaseandwaiting *1/timestep_reduction
-  SEIR[t_index,25] = SEIR[t_index,9] - SEIR[t_index-1,9]
+  SEIR[t_index, 1:24] = SEIR[t_index-1,1:24] + rateofchange_diseaseandwaiting *1/timestep_reduction
+  SEIR[t_index, 25] = SEIR[t_index,9] - SEIR[t_index-1,9]
   
   ###### calc number of samples to be collected ######
-  elibible_pop = sum(SEIR[t_index, names(relHaz)]) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
+  elibible_pop = sum(SEIR[t_index, names(relHaz)] * as.numeric( relHaz[t_index,] > 0)) # this feels messier than just defining relHaz to be zero for the ascertained and dead classes
   eligible_pop_t = c(eligible_pop_t, elibible_pop)
-  
   if(elibible_pop < tests_conducted[t_index]){
     print(sprintf("%s tests planned, but only %s individuals with nonzero hazards of being tested", tests_conducted[t_index], elibible_pop))
-    tests_conducted[t_index] = elibible_pop - 0.01 
+    tests_conducted[t_index] = elibible_pop - 0.01
   }
   
   tested_per_group = assignTests(numTests = tests_conducted[t_index], state = SEIR[t_index, names(relHaz)], relHaz = relHaz[t_index,])
@@ -222,7 +225,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_sample_C = -tested[t_index,"C"] 
   change_sample_R_P = -tested[t_index,"R_P"] 
   change_sample_R_N = -tested[t_index,"R_N"] 
-  change_sample_D = -tested[t_index,"daily_deaths"] 
+  change_sample_D = -tested[t_index,"daily_deaths"]
   
   change_sample_S_w = tested[t_index,"S"] 
   change_sample_E_w = tested[t_index,"E"] 
@@ -385,7 +388,7 @@ outbreak_plot
 #   geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
 #   labs(x = "Time (days)", y = "People")
 # prev_plot
-
+print(n_tmp[1] - n_tmp[length(n_tmp)])
 plot(timesteps, n_tmp)
 
 # prop_ascertained_plot <- dd %>% 

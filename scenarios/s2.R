@@ -16,6 +16,8 @@ relHaz = relHaz %>% data.frame()
 # passive testing only; non-covid only tested when presenting similar sypmtoms
 for(row in 1:nrow(relHaz)){
   relHaz[row,c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "daily_deaths")] = 
-  c(0.01, 0.01, 0.01, 0.01, 1, 10, 0.01, 0.01, 0.01) }
+  c(0.01, 0.01, 0.01, 0.01, 1, 10, 0.01, 0.01, 0.01) } 
+
+# can we get info on this from test positivity rate?
 
 # brainstorm
