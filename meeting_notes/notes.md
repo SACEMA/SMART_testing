@@ -1,7 +1,40 @@
+## Jnr meeting 2020-09-01
+#### testing scenarios
+* S1: equal hazards for testing
+* S2: hazards x100 for Mild, x1000 for critical
+* S1d: S1 with strong demand driven (i.e. lowish baseline and lots of feedback.). how do determine the max daily test supply?
+* S2d: S2 with strong demand driven (i.e. lowish baseline and lots of feedback.). how do determine the max daily test supply?
+
+#### outputs
+* ratio of detected to true incidence
+
+#### insight
+* there's no way to really know what the testing practices are. suppose results were divided by states.. but really we won't know that.
+* e.g. look at WC, change scenarios and compare
+
+## 2020-08-12
+* Fixed bug + unearthed a compromise
+* Basic approaches to inferring true incidence
+* Advanced approach - fitting relative hazards or something else
+* Skip next week's meeting
+
+* realistic but optimistic amounts of information available
+
 ## Ongoing issues:
 
 * parameter values for getting a roughly realistic curve (currently extremely high cumulative prevalence)
-* 
+* start plotting basic outputs
+
+* are there subsets of the tested people who you could look at to guess the relative hazards..
+* look at people tested who were hospitalised, as opposed to all people tested.
+* positive tests: know their condition
+
+* should always be easier to fit simulation to real data
+* which info should we assume we know going into the simulation:
+* can we match one or two waiting parameters by using calibration. either try to match pattern of testing or drive pattern of testing
+
+* if we are interested in incident in TB world, usually do a prevalence survey, then make assumptions around disease duration and calculate estimates of incidence from that. Problem is, these are very tedious and need large studies if done naively. One way it is done is to take an initial screening test (e.g. people coughing), then can reduce the number of people required in order to get estimate of prevalence.
+* instead of doing large prevalence survey for COVID, F wonders if it's interesting to consider multiple smaller prevalence surveys, taken over time, to see whether results and trends could help us more rapidly understand what the true prevalence/incidence is. multiple mini-surveys among symptomatic/asymptomatic people to learn about prevalence or incidence over time.
 
 ## Brainstorm for how to infer true incidence from confirmed case counts
 * depends on testing done, and percentage of tests which are positive
@@ -9,7 +42,10 @@
 
 
 * basic output: proportion positive \times popsize (upper bound; should be equal to true prevalence when testing is totally random)
-* 
+* if we only test critical cases at any one time... then how many non-critical cases do we expect? i.e. what is ratio of prevalent critical cases to all cases? i.e. abundance of tests, only test critical cases (no mistaken testing of non-critical cases).
+* suppose we test only mild and critical cases, with relative hazards of Mild = 1 and Critical = 10. so can we look at the ratio of ascertained mild vs ascertained critical, and compare these to the ratios of mild vs critical which we actually expect (based on biology and demographics)?
+
+* or, if we only test people with critical-covid-like symptoms (i.e. including severe flu etc), then the proportion positive reflects the ratio of the prevalence of severe covid in the population to the combined prevalence of severe forms of those other diseases (obviously). 
 
 * relative hazards are assuming that similar symptoms come up in rest of population...
 * test positivity

@@ -5,7 +5,8 @@ rm(list=ls(all=TRUE))
 source("hazard.R")
 library(tidyverse)
 library(extraDistr)
-scenario_file <- "./scenarios/s1.R"
+scenario_name = "S2"
+scenario_file <- sprintf("./scenarios/%s.R", scenario_name)
 tstart = 0
 tend = 250
 timestep_reduction = 1
@@ -17,7 +18,7 @@ colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D",
                    "S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w", 
                    "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a", "daily_deaths")
 
-source('./scenarios/s1.R')
+source(scenario_file)
 # source('./scenarios/s2.R')
 
 #####initial population sizes######
@@ -70,7 +71,7 @@ omega_E = 0.25
 sigma_p = 1/1.75   #3,11 presymptomatic to mild
 sigma_m = 1/32  #4,12 mild to critical    # citing The Novel Coronavirus Pneumonia Emergency Response Epidemiology Team. The Epidemiological Characteristics of an Outbreak of 2019 Novel Coronavirus Diseases (COVID-19) — China, 2020[J]. China CDC Weekly, 2020, 2(8): 113-122. doi: 10.46234/ccdcw2020.032 shu
 
-gamma_m = 1/8  #5,10 mild to recovery positive     # about 1/5 symptomatic cases become critical
+gamma_m = 1/7  #5,10 mild to recovery positive     # about 1/5 symptomatic cases become critical
 gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
 gamma_r = 1/10  #recover to negative
@@ -311,6 +312,8 @@ dd <- SEIR %>%
   mutate(test_results_returned = rowSums(test_results_returned))
 
 
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+
 # test_efficacy_plot <- dd %>%
 #   ggplot(aes(x = day, y = non_ascertained_prevalent_cases, color = 'Prevalent cases, non-ascertained')) +
 #    geom_line() +
@@ -329,23 +332,49 @@ testing_plot <- dd %>%
   geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
   # geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
   geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
-  labs(title = "Tests conducted", x = 'Time (days)', y = "Tests")
+  labs(title = "Tests conducted", x = 'Time (days)', y = "Tests") +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank()) +
+  coord_cartesian(xlim = c(0, 190)) +
+  scale_colour_manual(values=cbbPalette)
 testing_plot
+
+observed_prevalence_plot <- dd %>%
+  ggplot(aes(x = day, y = ascertained_prevalent_cases/total_prevalent_cases, color = "(Confirmed prevalence)/(true prevalence")) +
+  geom_line() +
+  theme(legend.position = "none", legend.title = element_blank()) +
+  coord_cartesian(xlim = c(0, 190)) +
+  labs(x = "Day", y = "Proportion of prevalent cases \n which are confirmed positive") +
+  scale_colour_manual(values=cbbPalette)
+observed_prevalence_plot
+
 
 prop_pos_plot <- dd %>%
   ggplot(aes(x = day, y = prop_positive, color = "Proportion of tests \n which come back positive")) +
   geom_line() +
   geom_line(aes(x= day, y = prevalence_per_thousand/1000, color = "Prevalence")) +
-  geom_line(aes(x = day, y = ascertained_prevalent_cases/n_alive, color = "Ascertained prevalence"))
+  geom_line(aes(x = day, y = ascertained_prevalent_cases/n_alive, color = "Ascertained prevalence")) +
+  labs(y = 'Proportion', x = "Day") +
+  scale_colour_manual(values=cbbPalette)+
+  coord_cartesian(xlim = c(0, 190)) +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank())
 prop_pos_plot
 
 cumulative_plot <- dd %>%
- ggplot(aes(x = day, y = cumulative_confirmed_cases,
+  ggplot(aes(x = day, y = cumulative_confirmed_cases,
             color = "Cumulative ascertained cases")) +
- geom_line()+
- # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
- geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
- labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths")
+  geom_line()+
+  # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
+  geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
+  labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths") +
+  scale_colour_manual(values=cbbPalette)+
+  coord_cartesian(xlim = c(0, 190))+
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank())
 cumulative_plot
 
 
@@ -353,11 +382,14 @@ prevalence_plot <- dd %>%
    ggplot(aes(x = day, y = prevalence_per_thousand, color = "Prevalence")) +
    geom_line() +
    labs(x = "Time (days)", y = "Cases per thousand population",
-        title = "Prevalence per thousand population")
+        title = "Prevalence per thousand population")+
+  theme(legend.title = element_blank(), legend.position = 'none') +
+  coord_cartesian(xlim = c(0, 190)) +
+  scale_colour_manual(values=cbbPalette)+
 prevalence_plot
 
  
- outbreak_plot <- dd %>%
+outbreak_plot <- dd %>%
   ggplot(aes(x = day, y = E, color = "Exposed")) +
   geom_line() +
   geom_line(aes(x = day, y = P + P_w + P_a, color = "Pre-symptomatic")) +
@@ -365,35 +397,61 @@ prevalence_plot
   geom_line(aes(x = day, y = M + M_w + M_a, color = "Mildly symptomatic")) +
   geom_line(aes(x = day, y = C + C_w + C_a, color = "Critical")) +
   geom_line(aes(x = day, y = D + D_w + D_a, color = "Dead")) +
-  labs(y = "Prevalent Cases", x = "Time (days)")
+  labs(y = "Prevalent Cases", x = "Time (days)", title = "Overview") +
+  scale_colour_manual(values=cbbPalette)+
+  coord_cartesian(xlim = c(0, 190)) +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank())
 outbreak_plot
 
-# mortality_plot <- dd %>%
-#   ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
-#   geom_line() +
-#   labs(x = "Time (days)", y = "People")
-# mortality_plot
-# 
-# inc_plot <- dd %>% ggplot(aes(x = day, y = incident_inf_cases, color = "Incident infectious \n cases per day")) +
-#   geom_line() +
-#   geom_line(aes(x = day, y = pos, color = "Newly confirmed cases per day")) +
-#   geom_line(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
-#   geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed \n daily deaths"))+
-#   # geom_line(aes(x = day, y = prevalence_per_thousand, color = "Prevalence per thousand")) +
-#   labs(x = "Time (days)", y = "People")
-# inc_plot
-# 
-# prev_plot <- dd %>% ggplot(aes(x = day, y = observed_prevalent_cases, color = "Confirmed (Ascertained) \n prevalent cases"))+
-#   geom_line() +
-#   geom_line(aes(x = day, y = prevalent_cases, color = "True prevalent cases")) +
-#   labs(x = "Time (days)", y = "People")
-# prev_plot
-print(n_tmp[1] - n_tmp[length(n_tmp)])
-plot(timesteps, n_tmp)
+mortality_plot <- dd %>%
+  ggplot(aes(x = day, y = daily_deaths, color = "Daily deaths")) +
+  geom_line() +
+  labs(x = "Time (days)", y = "People", title = "Mortality") +
+  theme(legend.title = element_blank()) +
+  scale_colour_manual(values=cbbPalette)+
+  coord_cartesian(xlim = c(0, 190)) +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1))
+mortality_plot
 
-# prop_ascertained_plot <- dd %>% 
-#   ggplot(aes(x = day, y = observed_prevalent_cases/prevalent_cases, color =
-#                "Proportion of true positives \n which are ascertained")) +
-#   geom_line() +
-#   labs(x = "Time (days)", y = "Proportion")
-# prop_ascertained_plot
+
+# names(dd)
+
+inc_plot <- dd %>% ggplot() +
+  geom_line(aes(x = day, y = incident_cases, color = "Incident cases")) +
+  geom_line(aes(x = day, y = positive_tests, color = "Newly confirmed cases")) +
+  geom_line(aes(x = day, y = daily_deaths, color = "Deaths")) +
+  geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed deaths"))+
+  # geom_line(aes(x = day, y = prevalence_per_thousand, color = "Prevalence per thousand")) +
+  labs(x = "Day", y = "People") +
+  coord_cartesian(xlim = c(0, 190)) +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1))
+inc_plot
+
+ascertainment_cases_vs_deaths <- dd %>% ggplot() +
+  geom_line(aes(x = day, y = positive_tests / (incident_cases + 1), color = "Positive tests per incident case")) +
+  geom_line(aes(x = day, y = daily_deaths_observed / daily_deaths, color = "Daily proportion of deaths \n with covid confirmation"))+
+  coord_cartesian(xlim = c(0, 190)) +
+  labs(x = "Day", y = "Proportion") +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank())
+ascertainment_cases_vs_deaths
+
+prop_pos_plot
+all_plot <- cowplot::plot_grid(outbreak_plot, ascertainment_cases_vs_deaths,cumulative_plot, observed_prevalence_plot, testing_plot, prevalence_plot, ncol = 2)
+all_plot
+
+ggsave( sprintf("./plots/scenario_%s.pdf",scenario_name), 
+        plot = last_plot(), 
+        scale = 1,
+        width = 20,
+        height = 28,
+        units = "in",
+        device = "pdf")
+
+
+# dd$positive_tests / dd$incident_cases
