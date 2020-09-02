@@ -385,7 +385,7 @@ prevalence_plot <- dd %>%
         title = "Prevalence per thousand population")+
   theme(legend.title = element_blank(), legend.position = 'none') +
   coord_cartesian(xlim = c(0, 190)) +
-  scale_colour_manual(values=cbbPalette)+
+  scale_colour_manual(values=cbbPalette)
 prevalence_plot
 
  
@@ -441,7 +441,7 @@ ascertainment_cases_vs_deaths <- dd %>% ggplot() +
         legend.title = element_blank())
 ascertainment_cases_vs_deaths
 
-prop_pos_plot
+#prop_pos_plot
 all_plot <- cowplot::plot_grid(outbreak_plot, ascertainment_cases_vs_deaths,cumulative_plot, observed_prevalence_plot, testing_plot, prevalence_plot, ncol = 2)
 all_plot
 
