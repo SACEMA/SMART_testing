@@ -5,7 +5,7 @@ rm(list=ls(all=TRUE))
 source("hazard.R")
 library(tidyverse)
 library(extraDistr)
-scenario_name = "S2"
+scenario_name = "s2"
 scenario_file <- sprintf("./scenarios/%s.R", scenario_name)
 tstart = 0
 tend = 250
