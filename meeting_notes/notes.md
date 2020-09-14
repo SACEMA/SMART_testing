@@ -3,16 +3,13 @@
 * Code doesn't run right out of the repo. issue which needs addressing.
 * Perhaps we should take some time to learn Make.
 * Calibration is a big task and may or may not yield useful results. Probably better to keep going after lower-hanging fruit, at least for a while longer.
+* Possibly try Windows Subsystem for Linux, with the idea to run Make eventually. Or just install Linux?
 
 Going forward to-dos:
 * Incorporate some sort of "phenomonological heterogeneity"
-* Curate some data we might use in future
-* Plot positive tests by date of sample collection (rather than test result)
-* use log scales and include more measures for some plots (e.g. plot 3)
+* Curate some data we might use in future. (Output: tests conducted & confirmed cases by date; for another country?). Try running model with noisy testing data from SA, rather than just the current linear assumption.
+* Plot positive tests by date of sample collection (rather than test result). Plots look okay, but some of them look a bit suspicious. need to check them. Use log scales and include more measures for some plots (e.g. plot 3)
 * Fix repo so code runs "out the box"
-* Try running model with noisy testing data from SA, rather than just the current linear assumption.
-* Possibly try Windows Subsystem for Linux, with the idea to run Make eventually. Or just install Linux?
-
 
 ## Jnr meeting 2020-09-01
 #### testing scenarios

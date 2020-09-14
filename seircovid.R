@@ -349,6 +349,9 @@ observed_prevalence_plot <- dd %>%
   scale_colour_manual(values=cbbPalette)
 observed_prevalence_plot
 
+# ascertainment_plot <- dd %>%
+#   ggplot() + 
+#   geom_line(aes( x = , y = , color = ))
 
 prop_pos_plot <- dd %>%
   ggplot(aes(x = day, y = prop_positive, color = "Proportion of tests \n which come back positive")) +
