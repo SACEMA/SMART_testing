@@ -76,6 +76,7 @@ gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
 gamma_r = 1/10  #recover to negative
 
+zeta = 1 # phenomenological heterogeneity
 
 mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
 
