@@ -82,7 +82,7 @@ mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("
 
 omega = 1/4 #1/waiting time for results
 
-r = 4     #reduction in "infectiousness" due to ascertainment
+r = 1  #reduction in "infectiousness" due to ascertainment
 
 
 rateofchange_diseaseandwaiting = c()
@@ -117,6 +117,7 @@ cumulative_observed_deaths = c(0)
 waitingcompartments <- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 test_results_returned <- array(dim = c(length(timesteps), length(waitingcompartments)))
 test_results_returned[1,] <- 0
+colnames(test_results_returned) = waitingcompartments
 colnames(test_results_returned)<- c("S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w")
 
 n_tmp <- c(N0,rep(0,length(timesteps) - 1))
@@ -282,7 +283,6 @@ for(t_index in seq(2,nrow(SEIR))){
   ####results accumulator#####
   #move into ascertained compartments
   #rate of test reults = omega
-
 }
 
 tests_conducted = tests_conducted[1:length(timesteps)] #dirty fix for demand driven testing making this vector too long
@@ -295,7 +295,7 @@ n_alive = SEIR %>%
  
 dd <- SEIR %>%
   data.frame() %>%
-  mutate(positive_tests = pos, day = 1:nrow(SEIR)) %>%
+  mutate(positive_samples_collected = pos, day = 1:nrow(SEIR)) %>%
   mutate(incident_infections = incident_infections) %>%  #S*lambda
   # mutate(incident_inf_cases = incident_inf_cases) %>% #m*E
   mutate(tests_conducted = tests_conducted) %>%
@@ -309,12 +309,15 @@ dd <- SEIR %>%
   mutate(daily_deaths = c(0, diff(D) + diff(D_a) + diff(D_w))) %>%
   mutate(daily_deaths_unobserved = c(0, diff(D))) %>%
   mutate(daily_deaths_observed = c(0, diff(D_a)+diff(D_w))) %>%
-  mutate(cumulative_confirmed_cases = cumsum(positive_tests)) %>%
-  mutate(prop_positive = positive_tests/tests_conducted)%>%
+  mutate(cumulative_confirmed_cases = cumsum(positive_samples_collected)) %>%
+  mutate(prop_positive = positive_samples_collected/tests_conducted)%>%
   mutate(cumulative_incidence = cumsum(incident_infections)) %>%
   mutate(max_daily_test_supply = max_daily_test_supply) %>%
-  mutate(test_results_returned = rowSums(test_results_returned))
+  mutate(test_results_returned = rowSums(test_results_returned)) %>%
+  mutate(positive_test_results_returned = 
+           rowSums(test_results_returned[,c("A_w", "P_w", "M_w", "C_w", "R_Pw", "D_w")]))
 
+colnames(test_results_returned)
 
 cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
@@ -333,7 +336,7 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"
 testing_plot <- dd %>%
   ggplot(aes(x = day, y = tests_conducted, color = "Samples collected")) +
   geom_line() +
-  geom_line(aes( x = day, y = positive_tests, color = "Positive test results")) +
+  geom_line(aes( x = day, y = positive_samples_collected, color = "Positive samples collected")) +
   # geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
   geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
   labs(title = "Tests conducted", x = 'Time (days)', y = "Tests") +
@@ -374,7 +377,7 @@ cumulative_plot <- dd %>%
   ggplot(aes(x = day, y = cumulative_confirmed_cases,
             color = "Cumulative ascertained cases")) +
   geom_line()+
-  # geom_line(aes(x = day, y = positive_tests, color = "Daily positive tests"))+
+  # geom_line(aes(x = day, y = positive_samples_collected, color = "Daily positive tests"))+
   geom_line(aes(x = day, y = D_a, color = "Cumulative ascertained deaths"))+
   labs(x = "Time (days)", y = "Cumulative ascertained cases and deaths") +
   scale_colour_manual(values=cbbPalette)+
@@ -428,7 +431,7 @@ mortality_plot
 
 inc_plot <- dd %>% ggplot() +
   geom_line(aes(x = day, y = incident_infections, color = "Incident cases")) +
-  geom_line(aes(x = day, y = positive_tests, color = "Newly confirmed cases")) +
+  geom_line(aes(x = day, y = positive_samples_collected, color = "Newly confirmed cases")) +
   geom_line(aes(x = day, y = daily_deaths, color = "Deaths")) +
   geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed deaths"))+
   # geom_line(aes(x = day, y = prevalence_per_thousand, color = "Prevalence per thousand")) +
@@ -439,14 +442,14 @@ inc_plot <- dd %>% ggplot() +
 inc_plot
 
 ascertainment_cases_vs_deaths <- dd %>% ggplot() +
-  geom_line(aes(x = day, y = positive_tests / (incident_infections + 1), color = "Positive tests per incident case")) +
+  geom_line(aes(x = day, y = positive_samples_collected / incident_infections, color = "Positive samples collected per incident case")) +
   geom_line(aes(x = day, y = daily_deaths_observed  / daily_deaths, color = "Daily proportion of deaths\nwith covid confirmation"))+ 
   geom_line(aes(x = day, y = daily_deaths_unobserved / daily_deaths, color = "Daily proportion of deaths\nwithout covid confirmation"))+
   geom_line(aes(x = day, y = (daily_deaths_observed + daily_deaths_unobserved) / daily_deaths, color = 'Sanity check')) +
   coord_cartesian(xlim = c(0, 190)) +
   labs(x = "Day", y = "Proportion") +
-  theme(legend.justification = c(0,1),
-        legend.position = c(0,1),
+  theme(#legend.justification = c(0,1),
+        #legend.position = c(0,1),
         legend.title = element_blank()) 
   # scale_y_log10()
 ascertainment_cases_vs_deaths
@@ -464,4 +467,4 @@ ggsave( sprintf("./plots/scenario_%s_r_%s_zeta_%s.pdf", scenario_name, r, zeta),
         device = "pdf")
 
 
-# dd$positive_tests / (dd$incident_infections + 1)
+# dd$positive_samples_collected / (dd$incident_infections + 1)
