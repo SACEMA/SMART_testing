@@ -1,6 +1,6 @@
 ## Scenario 1: completely random testing with linear approximation to SA test numbers
 
-source('scenarios/tests_conducted_linearSA.R')
+source('./scenarios/tests_conducted_linearSA.R')
 # source('scenarios/tests_conducted_constant.R')
 
 # relative hazards 1 for everybody

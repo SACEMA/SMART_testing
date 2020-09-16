@@ -1,6 +1,6 @@
 ## Scenario 2: only symptomatic people get tested, with linear approximation to SA test numbers
 
-source('scenarios/tests_conducted_linearSA.R')
+source('./scenarios/tests_conducted_linearSA.R')
 
 # relative hazards 1 for M, 10 for C, 0.1 for the rest
 

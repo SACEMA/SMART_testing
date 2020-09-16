@@ -76,13 +76,13 @@ gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
 gamma_r = 1/10  #recover to negative
 
-zeta = 1 # phenomenological heterogeneity
+zeta = 5 # strength of phenomenological heterogeneity
 
 mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
 
 omega = 1/4 #1/waiting time for results
 
-r = 1     #reduction in "infectiousness" due to ascertainment
+r = 4     #reduction in "infectiousness" due to ascertainment
 
 
 rateofchange_diseaseandwaiting = c()
@@ -103,7 +103,7 @@ neg <- c(tests_conducted[1]) #initilaize the first day with the base of 100 test
 tested[1,] = 0 #no-one tetsed on the first day 
 eligible_pop_t = c(sum(SEIR[1,compartments_to_test]))
 
-incident_cases = c(0)
+incident_infections = c(0)
 incident_in_cases = c(0)
 
 total_prevalent_cases = c(0)
@@ -155,14 +155,15 @@ for(t_index in seq(2,nrow(SEIR))){
   D_a = SEIR[t_index - 1, "D_a"]
   
   
-  lambda = beta*(((A + P + M + C)+r*(A_a + P_a + M_a + C_a))/N)
+  lambda = beta*(((A + P + M + C)+r*(A_a + P_a + M_a + C_a))) 
+  # N is shifted into the equations below for simplicity in implementing phenomenological heterogeneity
   lambda_w = lambda / 1
   
   #####model equations ####
 
   ####change in disease process and arrival of test results ####
-  change_S = - lambda*S + omega*S_w
-  change_E = lambda*S - alpha*m*E - (1-alpha)*m*E + omega_E*E_w
+  change_S = - lambda*(S/N)^(1 + zeta) + omega*S_w
+  change_E = lambda*(S/N)^(1 + zeta) - alpha*m*E - (1-alpha)*m*E + omega_E*E_w
   change_A = - gamma_a*A + alpha*m*E + alpha*m_w*E_w 
   change_P = (1-alpha)*m*E  - sigma_p*P + (1-alpha)*m_w*E_w
   change_M = sigma_p*P - sigma_m*M - gamma_m*M
@@ -171,8 +172,8 @@ for(t_index in seq(2,nrow(SEIR))){
   change_R_N = gamma_r*R_P + omega*R_Nw
   change_D = mu_c*C
   
-  change_S_w = - lambda_w*S_w - omega*S_w
-  change_E_w = + lambda_w*S_w - omega_E*E_w - alpha*m_w*E_w - (1-alpha)*m_w*E_w
+  change_S_w = - lambda_w*(S_w/N)^(1 + zeta) - omega*S_w
+  change_E_w = + lambda_w*(S_w/N)^(1 + zeta) - omega_E*E_w - alpha*m_w*E_w - (1-alpha)*m_w*E_w
   change_A_w = - gamma_a*A_w - omega*A_w
   change_P_w = -sigma_p*P_w  - omega*P_w
   change_M_w = sigma_p*P_w - sigma_m*M_w - gamma_m*M_w  - omega*M_w
@@ -227,7 +228,7 @@ for(t_index in seq(2,nrow(SEIR))){
   change_sample_C = -tested[t_index,"C"] 
   change_sample_R_P = -tested[t_index,"R_P"] 
   change_sample_R_N = -tested[t_index,"R_N"] 
-  change_sample_D = -tested[t_index,"daily_deaths"]
+  change_sample_D = - tested[t_index,"daily_deaths"]
   
   change_sample_S_w = tested[t_index,"S"] 
   change_sample_E_w = tested[t_index,"E"] 
@@ -259,7 +260,9 @@ for(t_index in seq(2,nrow(SEIR))){
           future_test_demand, max_daily_test_supply[t_index + testing_demand_lag])
   
   #### some outputs to save #####
-  incident_cases <- append(incident_cases, S*lambda) #what about S_w ?
+  incident_infections <- append(incident_infections,
+                           lambda * (S / N)^(1 + zeta) +
+                             lambda_w *(S_w / N)^(1 + zeta)) #what about S_w ?
   # incident_inf_cases <- append(incident_inf_cases,  m*E) #what about E_w ?
   
   total_prevalent_cases <- append(total_prevalent_cases, sum(A, A_w, A_a, P, P_w, P_a, M, M_w, M_a, C, C_w, C_a))
@@ -293,7 +296,7 @@ n_alive = SEIR %>%
 dd <- SEIR %>%
   data.frame() %>%
   mutate(positive_tests = pos, day = 1:nrow(SEIR)) %>%
-  mutate(incident_cases = incident_cases) %>%  #S*lambda
+  mutate(incident_infections = incident_infections) %>%  #S*lambda
   # mutate(incident_inf_cases = incident_inf_cases) %>% #m*E
   mutate(tests_conducted = tests_conducted) %>%
   mutate(total_prevalent_cases = total_prevalent_cases) %>%
@@ -303,12 +306,12 @@ dd <- SEIR %>%
   mutate(eligible_pop = eligible_pop_t ) %>% 
   mutate(n_alive = n_alive) %>%
   mutate(prevalence_per_thousand = 1000 * total_prevalent_cases/n_alive) %>%
-  mutate(daily_deaths = c(0, diff(D)+diff(D_a)+diff(D_w))) %>%
+  mutate(daily_deaths = c(0, diff(D) + diff(D_a) + diff(D_w))) %>%
   mutate(daily_deaths_unobserved = c(0, diff(D))) %>%
   mutate(daily_deaths_observed = c(0, diff(D_a)+diff(D_w))) %>%
   mutate(cumulative_confirmed_cases = cumsum(positive_tests)) %>%
   mutate(prop_positive = positive_tests/tests_conducted)%>%
-  mutate(cumulative_incidence = cumsum(incident_cases)) %>%
+  mutate(cumulative_incidence = cumsum(incident_infections)) %>%
   mutate(max_daily_test_supply = max_daily_test_supply) %>%
   mutate(test_results_returned = rowSums(test_results_returned))
 
@@ -424,7 +427,7 @@ mortality_plot
 # names(dd)
 
 inc_plot <- dd %>% ggplot() +
-  geom_line(aes(x = day, y = incident_cases, color = "Incident cases")) +
+  geom_line(aes(x = day, y = incident_infections, color = "Incident cases")) +
   geom_line(aes(x = day, y = positive_tests, color = "Newly confirmed cases")) +
   geom_line(aes(x = day, y = daily_deaths, color = "Deaths")) +
   geom_line(aes(x = day, y = daily_deaths_observed, color = "COVID-confirmed deaths"))+
@@ -436,20 +439,23 @@ inc_plot <- dd %>% ggplot() +
 inc_plot
 
 ascertainment_cases_vs_deaths <- dd %>% ggplot() +
-  geom_line(aes(x = day, y = positive_tests / (incident_cases + 1), color = "Positive tests per incident case")) +
-  geom_line(aes(x = day, y = daily_deaths_observed / daily_deaths, color = "Daily proportion of deaths \n with covid confirmation"))+
+  geom_line(aes(x = day, y = positive_tests / (incident_infections + 1), color = "Positive tests per incident case")) +
+  geom_line(aes(x = day, y = daily_deaths_observed  / daily_deaths, color = "Daily proportion of deaths\nwith covid confirmation"))+ 
+  geom_line(aes(x = day, y = daily_deaths_unobserved / daily_deaths, color = "Daily proportion of deaths\nwithout covid confirmation"))+
+  geom_line(aes(x = day, y = (daily_deaths_observed + daily_deaths_unobserved) / daily_deaths, color = 'Sanity check')) +
   coord_cartesian(xlim = c(0, 190)) +
   labs(x = "Day", y = "Proportion") +
   theme(legend.justification = c(0,1),
         legend.position = c(0,1),
-        legend.title = element_blank())
+        legend.title = element_blank()) 
+  # scale_y_log10()
 ascertainment_cases_vs_deaths
 
 #prop_pos_plot
 all_plot <- cowplot::plot_grid(outbreak_plot, ascertainment_cases_vs_deaths,cumulative_plot, observed_prevalence_plot, testing_plot, prevalence_plot, ncol = 2)
 all_plot
 
-ggsave( sprintf("./plots/scenario_%s.pdf",scenario_name), 
+ggsave( sprintf("./plots/scenario_%s_r_%s_zeta_%s.pdf", scenario_name, r, zeta), 
         plot = last_plot(), 
         scale = 1,
         width = 20,
@@ -458,4 +464,4 @@ ggsave( sprintf("./plots/scenario_%s.pdf",scenario_name),
         device = "pdf")
 
 
-# dd$positive_tests / dd$incident_cases
+# dd$positive_tests / (dd$incident_infections + 1)
