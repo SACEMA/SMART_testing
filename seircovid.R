@@ -5,7 +5,7 @@ rm(list=ls(all=TRUE))
 source("hazard.R")
 library(tidyverse)
 library(extraDistr)
-scenario_name = "s2"
+scenario_name = "s3"
 scenario_file <- sprintf("./scenarios/%s.R", scenario_name)
 
 if(scenario_name %in% c('s3','s4')){
@@ -67,7 +67,7 @@ N0 = sum(SEIR[1,])
 # mu = death rates
 # omega = 1/ waiting time for results 
 
-beta = 0.4
+beta = 0.3
 alpha = .25  #2,7 proportion asymptomatic
 m = 0.25 # 1/3.69     #2,7 1/latency duration
 m_w = 0.25
@@ -78,17 +78,16 @@ sigma_m = 1/32  #4,12 mild to critical    # citing The Novel Coronavirus Pneumon
 
 gamma_m = 1/7  #5,10 mild to recovery positive     # about 1/5 symptomatic cases become critical
 gamma_c = 1/7  #6,13 critical to recovery positive
-gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
+gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive 
 gamma_r = 1/10  #recover to negative
 
-zeta = 0 # strength of phenomenological heterogeneity
+zeta =  4# strength of phenomenological heterogeneity
 
 mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
 
 omega = 1/4 #1/waiting time for results
 
 r = 1  #reduction in "infectiousness" due to ascertainment
-
 
 rateofchange_diseaseandwaiting = c()
 #to track the number of people moving into the dead compartment each day 
@@ -447,15 +446,16 @@ inc_plot <- dd %>% ggplot() +
 inc_plot
 
 ascertainment_cases_vs_deaths <- dd %>% ggplot() +
-  geom_line(aes(x = day, y = positive_samples_collected / incident_infections, color = "Positive samples collected per incident case")) +
+  geom_line(aes(x = day, y = positive_samples_collected / (incident_infections + 0.01), color = "Positive samples collected\nper incident case")) +
   geom_line(aes(x = day, y = daily_deaths_observed  / daily_deaths, color = "Daily proportion of deaths\nwith covid confirmation"))+ 
-  geom_line(aes(x = day, y = daily_deaths_unobserved / daily_deaths, color = "Daily proportion of deaths\nwithout covid confirmation"))+
-  geom_line(aes(x = day, y = (daily_deaths_observed + daily_deaths_unobserved) / daily_deaths, color = 'Sanity check')) +
+  # geom_line(aes(x = day, y = daily_deaths_unobserved / daily_deaths, color = "Daily proportion of deaths\nwithout covid confirmation"))+
+  # geom_line(aes(x = day, y = (daily_deaths_observed + daily_deaths_unobserved) / daily_deaths, color = 'Sanity check')) +
   coord_cartesian(xlim = c(0, 190)) +
   labs(x = "Day", y = "Proportion") +
-  theme(#legend.justification = c(0,1),
-        #legend.position = c(0,1),
-        legend.title = element_blank()) 
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank(),
+        legend.background = element_rect(fill = 'transparent'))
   # scale_y_log10()
 ascertainment_cases_vs_deaths
 
@@ -463,7 +463,7 @@ ascertainment_cases_vs_deaths
 all_plot <- cowplot::plot_grid(outbreak_plot, ascertainment_cases_vs_deaths,cumulative_plot, observed_prevalence_plot, testing_plot, prevalence_plot, ncol = 2)
 all_plot
 
-ggsave( sprintf("./plots/scenario_%s_r_%s_zeta_%s.pdf", scenario_name, r, zeta), 
+ggsave( sprintf("./plots/scenario_%s_r%s_zeta%s_beta%s.pdf", scenario_name, r, zeta, beta), 
         plot = all_plot, 
         scale = 1,
         width = 20,
