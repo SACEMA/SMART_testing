@@ -313,9 +313,10 @@ dd <- SEIR %>%
   mutate(prop_positive = positive_samples_collected/tests_conducted)%>%
   mutate(cumulative_incidence = cumsum(incident_infections)) %>%
   mutate(max_daily_test_supply = max_daily_test_supply) %>%
-  mutate(test_results_returned = rowSums(test_results_returned)) %>%
   mutate(positive_test_results_returned = 
-           rowSums(test_results_returned[,c("A_w", "P_w", "M_w", "C_w", "R_Pw", "D_w")]))
+           rowSums(test_results_returned[,c("A_w", "P_w", "M_w", "C_w", "R_Pw", "D_w")])) %>%
+  mutate(test_results_returned = rowSums(test_results_returned))
+  
 
 colnames(test_results_returned)
 
@@ -332,13 +333,13 @@ cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2"
 #   geom_line() +
 #   geom_line(aes(x = day, y = prop_positive, color = 'Proportion positive'))
 # test_efficacy_plot_relative
-
 testing_plot <- dd %>%
   ggplot(aes(x = day, y = tests_conducted, color = "Samples collected")) +
   geom_line() +
   geom_line(aes( x = day, y = positive_samples_collected, color = "Positive samples collected")) +
   # geom_line(aes(x = day, y= max_daily_test_supply, color = "Maximum daily \n test supply")) +
   geom_line(aes(x = day, y = test_results_returned, color = "Test results returned"))+
+  geom_line(aes(x = day, y = positive_test_results_returned, color = "Positive test results")) + 
   labs(title = "Tests conducted", x = 'Time (days)', y = "Tests") +
   theme(legend.justification = c(0,1),
         legend.position = c(0,1),

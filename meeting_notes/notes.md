@@ -1,4 +1,11 @@
-## Meeting 2020-09-02
+## Jnr meeting 2020-09-16
+
+Elisha: 
+* read data from covid19za repo, look at daily number of reported cases
+* Abi doesn't have time this week, will try and change scale of log plot
+* 
+
+## Meeting 2020-09-02 (and Jnr meeting 2020-09-08)
 * Plots look okay, but some of them look a bit suspicious. need to check them.
 * Code doesn't run right out of the repo. issue which needs addressing.
 * Perhaps we should take some time to learn Make.
