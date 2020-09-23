@@ -1,3 +1,24 @@
+## Jnr meeting 2020-09-23
+
+- improve plots (add more measures)
+- add SA data to plots
+- make a function for running the scenario
+- choose key outputs
+
+issues:
+- model outbreak is happening faster than SA outbreak (so doesn't line up nicely with testing data)
+
+Agenda for senior meeting:
+- we input publicly-available SA testing data
+- for this to be meaningful we want the epidemic time-course to rougly match SA (currently happening too fast)
+- still to-do is plot SA case data alongside simulated case data
+- zeta makes epidemic smaller, but not much slower
+- how to slow epidemic: slow down transmission rate. reduce beta parameter.
+
+- in scenario with linearly increasing testing we have weird dip in ascertainment of fatal cases! chat about that graph.
+
+JB - generate a few plots for zeta
+
 ## Jnr meeting 2020-09-16
 
 Elisha: 

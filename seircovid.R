@@ -7,10 +7,17 @@ library(tidyverse)
 library(extraDistr)
 scenario_name = "s2"
 scenario_file <- sprintf("./scenarios/%s.R", scenario_name)
-tstart = 0
-tend = 250
-timestep_reduction = 1
-timesteps = seq(tstart, tend, 1/timestep_reduction)
+
+if(scenario_name %in% c('s3','s4')){
+  source(scenario_file)
+  # timesteps defined in scenario_file
+  }else{
+  tstart = 1
+  tend = 250
+  timestep_reduction = 1
+  timesteps = seq(tstart, tend, 1/timestep_reduction)
+  source(scenario_file)
+  }
 
 variables = 25
 SEIR = array(dim = c(length(timesteps),variables))
@@ -18,8 +25,6 @@ colnames(SEIR) = c("S", "E", "A", "P", "M", "C", "R_P", "R_N", "D",
                    "S_w", "E_w", "A_w", "P_w", "M_w", "C_w", "R_Pw", "R_Nw", "D_w", 
                    "A_a", "P_a", "M_a", "C_a", "R_Pa", "D_a", "daily_deaths")
 
-source(scenario_file)
-# source('./scenarios/s2.R')
 
 #####initial population sizes######
 S0 = 58000000 - 50
@@ -76,7 +81,7 @@ gamma_c = 1/7  #6,13 critical to recovery positive
 gamma_a = 1/14  #8,9 asymptomatic to recovered pos sitive
 gamma_r = 1/10  #recover to negative
 
-zeta = 5 # strength of phenomenological heterogeneity
+zeta = 0 # strength of phenomenological heterogeneity
 
 mu_c = 1/40 #20,14 critical to death      # about a quarter of critical cases ("severe + critical" in the cited work) die
 
@@ -92,7 +97,6 @@ people_died_eachday = c(0)
 
 ########### testing ##################
 
-source(scenario_file)
 # proportion of people being ascertained (demand) * some factor
 
 ####Creating arrays/ lists for outputs####
@@ -158,7 +162,7 @@ for(t_index in seq(2,nrow(SEIR))){
   
   lambda = beta*(((A + P + M + C)+r*(A_a + P_a + M_a + C_a))) 
   # N is shifted into the equations below for simplicity in implementing phenomenological heterogeneity
-  lambda_w = lambda / 1
+  lambda_w = lambda / r
   
   #####model equations ####
 
@@ -460,7 +464,7 @@ all_plot <- cowplot::plot_grid(outbreak_plot, ascertainment_cases_vs_deaths,cumu
 all_plot
 
 ggsave( sprintf("./plots/scenario_%s_r_%s_zeta_%s.pdf", scenario_name, r, zeta), 
-        plot = last_plot(), 
+        plot = all_plot, 
         scale = 1,
         width = 20,
         height = 28,

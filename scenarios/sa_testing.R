@@ -15,3 +15,5 @@ dd_test <- dd %>%
   select(date,daily_tests)
 
 dd_test$day = 1:nrow(dd_test)
+
+dd_test$daily_tests <- replace_na(dd_test$daily_tests, 1)
