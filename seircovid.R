@@ -494,7 +494,7 @@ positives_percompartment_plot <- dd %>%
   geom_line(aes(x = day, y = M_w + M_a, color = "Mildly symptomatic")) +
   geom_line(aes(x = day, y = C_w + C_a, color = "Critical")) +
   geom_line(aes(x = day, y = D_w + D_a, color = "Dead")) +
-  labs(y = "prevalent cases", x = "Time (days)", title = "Confirmed positive prevalent cases") +
+  labs(y = "prevalent cases", x = "Time (days)", title = "positive prevalent cases with samples collected") +
   scale_colour_manual(values=cbbPalette)+
   coord_cartesian(xlim = c(0, 250)) +
   theme(legend.justification = c(0,1),
@@ -502,4 +502,20 @@ positives_percompartment_plot <- dd %>%
         legend.title = element_blank())
 positives_percompartment_plot
 
+
+
+prop_positives_percompartment_plot <- dd %>%
+  ggplot(aes(x = day, y = (P_a+P_w) /(P+ P_a+P_w), color = "Pre-symptomatic")) +
+  geom_line() +
+  geom_line(aes(x = day, y = (A_w + A_a)/(A+ A_w + A_a), color = "Asymptomatic")) +
+  geom_line(aes(x = day, y = (M_w + M_a)/(M+ M_w + M_a), color = "Mildly symptomatic")) +
+  geom_line(aes(x = day, y = (C_w + C_a)/(C+ C_w + C_a), color = "Critical")) +
+  geom_line(aes(x = day, y = (D_w + D_a)/(D+D_w + D_a), color = "Dead")) +
+  labs(y = "prevalent cases", x = "Time (days)", title = "proportion positive prevalent cases with samples collected") +
+  scale_colour_manual(values=cbbPalette)+
+  coord_cartesian(xlim = c(0, 250)) +
+  theme(legend.justification = c(0,1),
+        legend.position = c(0,1),
+        legend.title = element_blank())
+prop_positives_percompartment_plot
 
