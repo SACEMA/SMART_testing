@@ -5,7 +5,7 @@ rm(list=ls(all=TRUE))
 source("hazard.R")
 library(tidyverse)
 library(extraDistr)
-scenario_name = "s3"
+scenario_name = "s2"
 scenario_file <- sprintf("./scenarios/%s.R", scenario_name)
 
 if(scenario_name %in% c('s3','s4')){
