@@ -4,7 +4,8 @@ source('./scenarios/sa_testing.R')
 
 #make number of timesteps equal to number of dates with testing data
 
-tests_conducted = dd_test$daily_tests
+tests_conducted = dd_test$daily_tests  ###possibly make this a parameter in main (=true)
+                                        ### or choose dd_test_raw$daily_tests_raw
 
 timestep_reduction = 1 # don't change
 tstart = 1
