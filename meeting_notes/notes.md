@@ -1,3 +1,28 @@
+## Junior meeting 2020-09-30 (and ideas that popped up nearby in time)
+- update smoothed version of SA tests (needs more than linear model, goes down after mid-July)
+- smooth SA tests and incidence data for comparison
+
+tasks (ad-hoc)
+- import MRC excess deaths, and confirmed covid deaths EA
+- update smoothed version of SA tests (needs more than linear model, goes down after mid-July): could do a spline, polynomial fit, or maybe moving average (movavg() in R) AdV
+- adjust timescale of the epidemic by explicitly slowing things down (rather than changing beta)
+- we should probably be calculating Rt from the observed and "true" incidence and deaths. JB
+- make a function for running the scenario
+
+## notes 2020-09-23
+- general progress update.
+- phenomenological heterogeneity doesn't slow epidemic much if at all (confirmed that this is expected behavior)
+- the 'weird' looking plot received some positive affirmation.
+
+to-do this week and after
+- plot: incidence of actual and detected covid deaths (in model)
+- at some point: bring in SA deaths, excess deaths, and cases to plots.
+- adjust timescale of the epidemic by explicitly slowing things down (rather than changing beta)
+- (non-meeting, thought from jb) - we should probably be calculating Rt from the observed and "true" incidence and deaths.
+- make a function for running the scenario
+
+- general question from Jonathan: how did south africa control the epidemic
+
 ## Jnr meeting 2020-09-23
 
 - improve plots (add more measures)
@@ -14,8 +39,10 @@ Agenda for senior meeting:
 - still to-do is plot SA case data alongside simulated case data
 - zeta makes epidemic smaller, but not much slower
 - how to slow epidemic: slow down transmission rate. reduce beta parameter.
-
 - in scenario with linearly increasing testing we have weird dip in ascertainment of fatal cases! chat about that graph.
+
+other thoughts (jb):
+- clarify which graphs we should be producing
 
 JB - generate a few plots for zeta
 

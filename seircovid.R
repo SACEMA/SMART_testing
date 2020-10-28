@@ -487,7 +487,7 @@ ggsave( sprintf("./plots/scenario_%s_r%s_zeta%s_beta%s.pdf", scenario_name, r, z
 
 
 
-positives_percompartment_plot <- dd %>%
+positives_prev_ascertained_plot <- dd %>%
   ggplot(aes(x = day, y = P_a+P_w, color = "Pre-symptomatic")) +
   geom_line() +
   geom_line(aes(x = day, y = A_w + A_a, color = "Asymptomatic")) +
@@ -500,11 +500,11 @@ positives_percompartment_plot <- dd %>%
   theme(legend.justification = c(0,1),
         legend.position = c(0,1),
         legend.title = element_blank())
-positives_percompartment_plot
+positives_prev_ascertained_plot
 
 
 
-prop_positives_percompartment_plot <- dd %>%
+prop_positives_ascertained_plot <- dd %>%
   ggplot(aes(x = day, y = (P_a+P_w) /(P+ P_a+P_w), color = "Pre-symptomatic")) +
   geom_line() +
   geom_line(aes(x = day, y = (A_w + A_a)/(A+ A_w + A_a), color = "Asymptomatic")) +
@@ -517,5 +517,5 @@ prop_positives_percompartment_plot <- dd %>%
   theme(legend.justification = c(0,1),
         legend.position = c(0,1),
         legend.title = element_blank())
-prop_positives_percompartment_plot
+prop_positives_ascertained_plot
 
